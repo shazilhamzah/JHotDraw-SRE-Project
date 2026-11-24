@@ -254,36 +254,39 @@ public class SVGInputFormat implements InputFormat {
    * into attributes with the same name.
    */
   private void flattenStyles(Element elem) throws IOException {
-    if (elem.getLocalName() != null
-        && elem.getLocalName().equals("style")
-        && readAttribute(elem, "type", "").equals("text/css")
-        && elem.getTextContent() != null) {
+    if (isCssStyleElement(elem)) {
       CSSParser cssParser = new CSSParser();
       cssParser.parse(elem.getTextContent(), styleManager);
-    } else {
-      if (isSvgElement(elem)) {
-        String style = readAttribute(elem, "style", null);
-        if (style != null) {
-          for (String styleProperty : style.split(";")) {
-            String[] stylePropertyElements = styleProperty.split(":");
-            if (stylePropertyElements.length == 2
-                && !elem.hasAttributeNS(SVG_NAMESPACE, stylePropertyElements[0].trim())) {
-              // if (DEBUG) System.out.println("flatten:"+Arrays.toString(stylePropertyElements));
-              elem.setAttributeNS(
-                  SVG_NAMESPACE, stylePropertyElements[0].trim(), stylePropertyElements[1].trim());
-            }
-          }
-        }
-        styleManager.applyStylesTo(elem);
-        NodeList list = elem.getChildNodes();
-        for (int i = 0; i < list.getLength(); i++) {
-          if (!(list.item(i) instanceof Element child)) {
+      return;
+    }
+    if (!isSvgElement(elem)) {
+      return;
+    }
+    applyInlineStyle(elem);
+    styleManager.applyStylesTo(elem);
+    NodeList list = elem.getChildNodes();
+    for (int i = 0; i < list.getLength(); i++) {
+      if (list.item(i) instanceof Element child) {
+        flattenStyles(child);
+      }
+    }
+  }
 
-            continue;
+  private boolean isCssStyleElement(Element elem) {
+    return "style".equals(elem.getLocalName())
+        && readAttribute(elem, "type", "").equals("text/css")
+        && elem.getTextContent() != null;
+  }
 
-          }
-          flattenStyles(child);
-        }
+  private void applyInlineStyle(Element elem) {
+    String style = readAttribute(elem, "style", null);
+    if (style == null) {
+      return;
+    }
+    for (String styleProperty : style.split(";")) {
+      String[] parts = styleProperty.split(":");
+      if (parts.length == 2 && !elem.hasAttributeNS(SVG_NAMESPACE, parts[0].trim())) {
+        elem.setAttributeNS(SVG_NAMESPACE, parts[0].trim(), parts[1].trim());
       }
     }
   }
