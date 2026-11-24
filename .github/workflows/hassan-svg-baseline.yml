@@ -54,7 +54,7 @@ jobs:
           curl -fsSL https://github.com/pmd/pmd/releases/download/pmd_releases/7.17.0/pmd-dist-7.17.0-bin.zip -o /tmp/pmd/pmd.zip
           unzip -q /tmp/pmd/*.zip -d /tmp/pmd
           PMD=$(find /tmp/pmd -path '*/bin/pmd' -print -quit)
-          "$PMD" check -d jhotdraw-src/jhotdraw-samples/jhotdraw-samples-misc/src/main/java/org/jhotdraw/samples/svg/io/SVGInputFormat.java -R category/java/design.xml -f xml -r metrics/pmd.xml --no-fail-on-violation
+          "$PMD" check -d jhotdraw-src/jhotdraw-samples/jhotdraw-samples-misc/src/main/java/org/jhotdraw/samples/svg/io/SVGInputFormat.java,jhotdraw-src/jhotdraw-samples/jhotdraw-samples-misc/src/main/java/org/jhotdraw/samples/svg/io/SVGPathParser.java -R category/java/design.xml -f xml -r metrics/pmd.xml --no-fail-on-violation
       - name: Compare original and refactored metrics
         run: |
           git worktree add --detach /tmp/svg-original 4533afd
@@ -71,6 +71,11 @@ jobs:
                   for row in csv.DictReader(f):
                       if row['class'].endswith(('.SVGInputFormat', '.SVGPathParser')):
                           print(row)
+              with open(prefix + 'method.csv') as f:
+                  rows = [row for row in csv.DictReader(f) if row['class'].endswith(('.SVGInputFormat', '.SVGPathParser'))]
+                  print('CK method columns:', list(rows[0]) if rows else [])
+                  for row in rows:
+                      print('Method metrics:', row)
               counts = collections.Counter(v.attrib['rule'] for v in ET.parse(prefix + 'pmd.xml').getroot().iter() if v.tag.split('}')[-1] == 'violation')
               print('PMD total:', sum(counts.values()), dict(counts))
           PY
