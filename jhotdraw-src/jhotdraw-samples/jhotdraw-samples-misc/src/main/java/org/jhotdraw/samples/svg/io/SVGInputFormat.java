@@ -1397,31 +1397,15 @@ public class SVGInputFormat implements InputFormat {
   /** Reads shape attributes. */
   private void readShapeAttributes(Element elem, HashMap<AttributeKey<?>, Object> a)
       throws IOException {
+    readFillAttributes(elem, a);
+    readStrokePaint(elem, a);
+    readStrokeStyleAttributes(elem, a);
+  }
+
+  private void readFillAttributes(Element elem, HashMap<AttributeKey<?>, Object> a)
+      throws IOException {
     Object objectValue;
     String value;
-    double doubleValue;
-    // 'color'
-    // Value:   <color> | inherit
-    // Initial:    depends on user agent
-    // Applies to:   None. Indirectly affects other properties via currentColor
-    // Inherited:    yes
-    // Percentages:    N/A
-    // Media:    visual
-    // Animatable:    yes
-    // Computed value:    Specified <color> value, except inherit
-    // value = readInheritAttribute(elem, "color", "black");
-    // if (DEBUG) System.out.println("color="+value);
-    // 'color-rendering'
-    // Value:    auto | optimizeSpeed | optimizeQuality | inherit
-    // Initial:    auto
-    // Applies to:    container elements , graphics elements and 'animateColor'
-    // Inherited:    yes
-    // Percentages:    N/A
-    // Media:    visual
-    // Animatable:    yes
-    // Computed value:    Specified value, except inherit
-    // value = readInheritAttribute(elem, "color-rendering", "auto");
-    // if (DEBUG) System.out.println("color-rendering="+value);
     // 'fill'
     // Value:   <paint> | inherit (See Specifying paint)
     // Initial:    black
@@ -1436,8 +1420,6 @@ public class SVGInputFormat implements InputFormat {
       FILL_COLOR.put(a, (Color) objectValue);
     } else if (objectValue instanceof Gradient) {
       FILL_GRADIENT.putClone(a, (Gradient) objectValue);
-    } else if (objectValue == null) {
-      FILL_COLOR.put(a, null);
     } else {
       FILL_COLOR.put(a, null);
     }
@@ -1463,6 +1445,11 @@ public class SVGInputFormat implements InputFormat {
     // Computed value:    Specified value, except inherit
     value = readInheritAttribute(elem, "fill-rule", "nonzero");
     WINDING_RULE.put(a, SVG_FILL_RULES.get(value));
+  }
+
+  private void readStrokePaint(Element elem, HashMap<AttributeKey<?>, Object> a)
+      throws IOException {
+    Object objectValue;
     // 'stroke'
     // Value:   <paint> | inherit (See Specifying paint)
     // Initial:    none
@@ -1478,11 +1465,16 @@ public class SVGInputFormat implements InputFormat {
       STROKE_COLOR.put(a, (Color) objectValue);
     } else if (objectValue instanceof Gradient) {
       STROKE_GRADIENT.putClone(a, (Gradient) objectValue);
-    } else if (objectValue == null) {
-      STROKE_COLOR.put(a, null);
     } else {
       STROKE_COLOR.put(a, null);
     }
+  }
+
+  private void readStrokeStyleAttributes(Element elem, HashMap<AttributeKey<?>, Object> a)
+      throws IOException {
+    Object objectValue;
+    String value;
+    double doubleValue;
     // 'stroke-dasharray'
     // Value:    none | <dasharray> | inherit
     // Initial:    none
