@@ -201,4 +201,60 @@ class SVGImportIntegrationTest {
     new SVGInputFormat().read(transferable, drawing, true);
     assertEquals(1, drawing.getChildren().size());
   }
+
+  @Test
+  void importsRelativeImages(@org.junit.jupiter.api.io.TempDir java.nio.file.Path dir)
+      throws IOException {
+    java.nio.file.Path png = dir.resolve("pixel.png");
+    javax.imageio.ImageIO.write(new java.awt.image.BufferedImage(2, 2,
+        java.awt.image.BufferedImage.TYPE_INT_RGB), "png", png.toFile());
+    java.nio.file.Files.writeString(dir.resolve("nested.svg"),
+        svg("<rect width='20' height='30'/>"));
+    java.nio.file.Path file = dir.resolve("drawing.svg");
+    java.nio.file.Files.writeString(file, svg(
+        "<image width='20' height='30' href='pixel.png'/>"
+        + "<image x='30' width='20' height='30' href='nested.svg'/>"));
+    DefaultDrawing drawing = new DefaultDrawing();
+    new SVGInputFormat().read(file.toFile(), drawing, true);
+    assertEquals(2, drawing.getChildren().size());
+  }
+
+  @Test
+  void missingRasterDoesNotPreventOtherFigures(
+      @org.junit.jupiter.api.io.TempDir java.nio.file.Path dir) throws IOException {
+    java.nio.file.Path file = dir.resolve("drawing.svg");
+    java.nio.file.Files.writeString(file, svg(
+        "<image width='20' height='30' href='missing.png'/>"
+        + "<rect x='40' width='20' height='30'/>"));
+    DefaultDrawing drawing = new DefaultDrawing();
+    new SVGInputFormat().read(file.toUri().toURL(), drawing, true);
+    assertTrue(drawing.getChildren().stream().anyMatch(
+        figure -> Math.abs(figure.getBounds().getX() - 40) < 0.001));
+  }
+
+  @Test
+  void switchSkipsUnsupportedFeatures() throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(svg("<switch><rect requiredFeatures='urn:unsupported' width='10' height='10'/>"
+        + "<rect x='40' width='20' height='30'/></switch>"), drawing, true);
+    assertEquals(1, drawing.getChildren().size());
+    assertEquals(40, drawing.getChildren().get(0).getBounds().getX(), 0.001);
+  }
+
+  @Test
+  void useResolvesXmlId() throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(svg("<defs><rect xml:id='r' width='20' height='30'/></defs>"
+        + "<use xmlns:xlink='http://www.w3.org/1999/xlink' xlink:href='#r'/>"),
+        drawing, true);
+    assertEquals(1, drawing.getChildren().size());
+  }
+
+  @Test
+  void useResolvesUnprefixedHref() throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(svg("<defs><rect id='r' width='20' height='30'/></defs>"
+        + "<use href='#r'/>"), drawing, true);
+    assertEquals(1, drawing.getChildren().size());
+  }
 }
