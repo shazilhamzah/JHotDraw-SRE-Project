@@ -198,8 +198,12 @@ class SVGImportIntegrationTest {
     };
     DefaultDrawing drawing = new DefaultDrawing();
     read(svg("<circle cx='20' cy='20' r='10'/>"), drawing, true);
+    new SVGInputFormat().read(transferable, drawing, false);
+    assertEquals(2, drawing.getChildren().size());
     new SVGInputFormat().read(transferable, drawing, true);
     assertEquals(1, drawing.getChildren().size());
+    assertEquals(20, drawing.getChildren().get(0).getBounds().getWidth(), 0.001);
+    assertEquals(30, drawing.getChildren().get(0).getBounds().getHeight(), 0.001);
   }
 
   @Test
@@ -401,5 +405,22 @@ class SVGImportIntegrationTest {
     assertEquals(3, decoded.getWidth());
     assertEquals(2, decoded.getHeight());
     assertEquals(java.awt.Color.RED.getRGB(), decoded.getRGB(1, 1));
+  }
+  @Test
+  void circleAndEllipseGeometryIsPreserved() throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(svg("<circle cx='50' cy='60' r='20'/>"
+        + "<ellipse cx='100' cy='80' rx='30' ry='10'/>"), drawing, true);
+    assertEquals(2, drawing.getChildren().size());
+    var circle = drawing.getChildren().get(0).getBounds();
+    assertEquals(30, circle.getX(), 0.001);
+    assertEquals(40, circle.getY(), 0.001);
+    assertEquals(40, circle.getWidth(), 0.001);
+    assertEquals(40, circle.getHeight(), 0.001);
+    var ellipse = drawing.getChildren().get(1).getBounds();
+    assertEquals(70, ellipse.getX(), 0.001);
+    assertEquals(70, ellipse.getY(), 0.001);
+    assertEquals(60, ellipse.getWidth(), 0.001);
+    assertEquals(20, ellipse.getHeight(), 0.001);
   }
 }
