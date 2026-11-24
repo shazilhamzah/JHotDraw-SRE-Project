@@ -47,7 +47,8 @@ jobs:
         if: always()
         run: |
           mkdir -p metrics
-          mvn -B dependency:copy -Dartifact=net.sourceforge.pmd:pmd-dist:7.17.0:zip -DoutputDirectory=/tmp/pmd
+          mkdir -p /tmp/pmd
+          curl -fsSL https://github.com/pmd/pmd/releases/download/pmd_releases/7.17.0/pmd-dist-7.17.0-bin.zip -o /tmp/pmd/pmd.zip
           unzip -q /tmp/pmd/*.zip -d /tmp/pmd
           PMD=$(find /tmp/pmd -path '*/bin/pmd' -print -quit)
           "$PMD" check -d jhotdraw-src/jhotdraw-samples/jhotdraw-samples-misc/src/main/java/org/jhotdraw/samples/svg/io/SVGInputFormat.java -R category/java/design.xml -f xml -r metrics/pmd.xml --no-fail-on-violation
