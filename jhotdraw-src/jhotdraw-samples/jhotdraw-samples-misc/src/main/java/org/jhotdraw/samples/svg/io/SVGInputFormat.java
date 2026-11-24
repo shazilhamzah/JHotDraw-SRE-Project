@@ -2464,7 +2464,7 @@ public class SVGInputFormat implements InputFormat {
       throws UnsupportedFlavorException, IOException {
     InputStream in = (InputStream) t.getTransferData(new DataFlavor("image/svg+xml", "Image SVG"));
     try {
-      read(in, drawing, false);
+      read(in, drawing, replace);
     } finally {
       in.close();
     }
