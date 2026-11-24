@@ -423,4 +423,15 @@ class SVGImportIntegrationTest {
     assertEquals(60, ellipse.getWidth(), 0.001);
     assertEquals(20, ellipse.getHeight(), 0.001);
   }
+  // Characterize the legacy 90 dpi conversion convention without changing it.
+  @org.junit.jupiter.params.ParameterizedTest
+  @org.junit.jupiter.params.provider.CsvSource({
+      "20pt,25", "2pc,30", "20mm,70.86614", "2cm,70.86614", "1in,90"
+  })
+  void preservesLegacyPhysicalUnitConversions(String width, double expected) throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(svg("<rect width='" + width + "' height='30'/>"), drawing, true);
+    assertEquals(1, drawing.getChildren().size());
+    assertEquals(expected, drawing.getChildren().get(0).getBounds().getWidth(), 0.001);
+  }
 }
