@@ -339,4 +339,61 @@ class SVGImportIntegrationTest {
     read(svg("<text x='10' y='30' font-size='18'>Hello</text>"), drawing, true);
     assertEquals(18.0, org.jhotdraw.samples.svg.SVGAttributeKeys.FONT_SIZE.get(drawing.getChildren().get(0)), 0.001);
   }
+
+  @Test
+  void viewBoxScalesRectangleUniformly() throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read("<svg xmlns='http://www.w3.org/2000/svg' width='200' height='100' "
+        + "viewBox='0 0 50 50'><rect width='10' height='20'/></svg>", drawing, true);
+    var bounds = drawing.getChildren().get(0).getBounds();
+    assertEquals(20, bounds.getWidth(), 0.001);
+    assertEquals(40, bounds.getHeight(), 0.001);
+  }
+
+  @Test
+  void nestedViewportWithoutAspectRatioUsesIndependentScales() throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(svg("<svg width='100' height='50' viewBox='0 0 50 50' preserveAspectRatio='none'>"
+        + "<rect width='10' height='20'/></svg>"), drawing, true);
+    var bounds = drawing.getChildren().get(0).getBounds();
+    assertEquals(20, bounds.getWidth(), 0.001);
+    assertEquals(20, bounds.getHeight(), 0.001);
+  }
+
+  @Test
+  void inheritsFontSizeFromRoot() throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read("<svg xmlns='http://www.w3.org/2000/svg' font-size='24'>"
+        + "<text x='10' y='30' font-size='inherit'>Hello</text></svg>", drawing, true);
+    assertEquals(24.0, org.jhotdraw.samples.svg.SVGAttributeKeys.FONT_SIZE.get(
+        drawing.getChildren().get(0)), 0.001);
+  }
+
+  @Test
+  void hiddenRectangleIsNotImported() throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(svg("<rect width='10' height='10' visibility='hidden'/>"
+        + "<rect x='40' width='20' height='30'/>"), drawing, true);
+    assertEquals(1, drawing.getChildren().size());
+    assertEquals(40, drawing.getChildren().get(0).getBounds().getX(), 0.001);
+  }
+
+  @Test
+  void relativeRasterUrlPreservesDecodedPixels(
+      @org.junit.jupiter.api.io.TempDir java.nio.file.Path dir) throws IOException {
+    var raster = new java.awt.image.BufferedImage(3, 2, java.awt.image.BufferedImage.TYPE_INT_RGB);
+    raster.setRGB(1, 1, java.awt.Color.RED.getRGB());
+    javax.imageio.ImageIO.write(raster, "png", dir.resolve("pixel.png").toFile());
+    var file = dir.resolve("drawing.svg");
+    java.nio.file.Files.writeString(file, svg("<image width='30' height='20' href='pixel.png'/>"));
+    DefaultDrawing drawing = new DefaultDrawing();
+    new SVGInputFormat().read(file.toUri().toURL(), drawing, true);
+    assertEquals(1, drawing.getChildren().size());
+    var figure = (org.jhotdraw.samples.svg.figures.SVGImageFigure) drawing.getChildren().get(0);
+    var decoded = figure.getBufferedImage();
+    assertNotNull(decoded);
+    assertEquals(3, decoded.getWidth());
+    assertEquals(2, decoded.getHeight());
+    assertEquals(java.awt.Color.RED.getRGB(), decoded.getRGB(1, 1));
+  }
 }
