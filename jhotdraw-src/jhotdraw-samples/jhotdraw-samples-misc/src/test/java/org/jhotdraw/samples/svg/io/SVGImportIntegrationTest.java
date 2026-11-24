@@ -257,4 +257,29 @@ class SVGImportIntegrationTest {
         + "<use href='#r'/>"), drawing, true);
     assertEquals(1, drawing.getChildren().size());
   }
+
+  @Test
+  void switchMatchesLanguageTagIgnoringCase() throws IOException {
+    java.util.Locale locale = org.jhotdraw.utils.util.LocaleUtil.getDefault();
+    org.junit.jupiter.api.Assumptions.assumeFalse(locale.getLanguage().isEmpty());
+    String tag = locale.getLanguage().toUpperCase(java.util.Locale.ROOT);
+    if (!locale.getCountry().isEmpty()) {
+      tag += "-" + locale.getCountry().toUpperCase(java.util.Locale.ROOT);
+    }
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(svg("<switch><rect systemLanguage='" + tag
+        + "' x='40' width='20' height='30'/><rect width='10' height='10'/></switch>"),
+        drawing, true);
+    assertEquals(1, drawing.getChildren().size());
+    assertEquals(40, drawing.getChildren().get(0).getBounds().getX(), 0.001);
+  }
+
+  @Test
+  void circularUseDoesNotPreventOtherFigures() throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(svg("<defs><use id='loop' href='#loop'/></defs><use href='#loop'/>"
+        + "<rect x='40' width='20' height='30'/>"), drawing, true);
+    assertEquals(1, drawing.getChildren().size());
+    assertEquals(40, drawing.getChildren().get(0).getBounds().getX(), 0.001);
+  }
 }
