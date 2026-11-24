@@ -1,0 +1,6 @@
+﻿DefaultDrawingView.java PMD violations: 5
+L141-143 [Error Prone/EmptyCatchBlock] p=3: Avoid empty catch blocks
+L300-304 [Code Style/EmptyControlStatement] p=3: Empty else statement
+L726-726 [Code Style/UnnecessaryFullyQualifiedName] p=4: Unnecessary qualifier 'java.awt': 'Graphics2D' is already in scope because it is imported in this file
+L1017-1017 [Error Prone/AvoidBranchingStatementAsLastInLoop] p=2: Avoid using a branching statement as the last in a loop.
+L1120-1120 [Code Style/UnnecessaryFullyQualifiedName] p=4: Unnecessary qualifier 'EditableComponent': 'SELECTION_EMPTY_PROPERTY' is already in scope because it is inherited by an enclosing type

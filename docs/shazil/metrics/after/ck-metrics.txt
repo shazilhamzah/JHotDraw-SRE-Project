@@ -1,0 +1,227 @@
+=== AST CK & Complexity Metrics ===
+
+Class                             LOC   SLOC   NOM   NOF   WMC  MaxCC   AvgCC   CBO   LCOM1    LCOM*
+------------------------------------------------------------------------------------------------------
+DefaultDrawingView                876    676    86    25   137      5    1.59    45    2722   0.9349
+EventHandler                       81     71    10     0    20      5    2.00    11      45   0.0000
+DrawingViewBuffer                 270    242    17     7    56     13    3.29    12      28   0.7467
+DrawingViewViewport               197    169    17     4    40      6    2.35     8       0   0.6406
+DrawingViewHandleManager          222    202    19     5    46      6    2.42    15       2   0.7125
+DrawingViewSelectionManager       103     89    11     3    19      4    1.73    13       0   0.6000
+SelectionDelta                     10      9     1     4     1      1    1.00     4       0   0.0000
+DrawingViewEditCommands           135    113     3     3    12      6    4.00    11       0   0.0000
+DeleteFiguresEdit                  43     38     4     5     6      2    1.50     8       0   0.5000
+DuplicateFiguresEdit               29     24     4     3     4      1    1.00     7       0   0.3333
+
+Class DefaultDrawingView (DefaultDrawingView.java:57-932)
+  Coupled types (45): AffineTransform, BufferedImage, Collection, Collections, Color, Constrainer, Consumer, Cursor, DefaultDrawingViewTransferHandler, Dimension, Drawing, DrawingEditor, DrawingView, DrawingViewBuffer, DrawingViewEditCommands, DrawingViewHandleManager, DrawingViewSelectionManager, DrawingViewViewport, EditableComponent, EventHandler, Figure, FigureEvent, FigureListener, FigureListenerAdapter, FigureSelectionEvent, FigureSelectionListener, Graphics, Graphics2D, GridConstrainer, Handle, JComponent, JLabel, List, MouseEvent, Paint, Point, Point2D, Rectangle, Rectangle2D, RenderingHints, SelectionDelta, Set, Shape, TexturePaint, Timer
+  Methods sorted by CC desc:
+    CC= 1 LOC= 11 L 758-768  setScaleFactor(double)
+    CC= 1 LOC= 10 L 240-249  DefaultDrawingView()
+    CC= 1 LOC=  9 L 412-420  drawWithViewTransform(Graphics2D, Consumer<Graphics2D>)
+    CC= 1 LOC=  8 L 318-325  drawDrawingVolatileBuffered(Graphics2D)
+    CC= 1 LOC=  8 L 328-335  drawDrawingNonvolatileBuffered(Graphics2D)
+    CC= 1 LOC=  8 L 808-815  removeNotify(DrawingEditor)
+    CC= 1 LOC=  8 L 817-824  addNotify(DrawingEditor)
+    CC= 1 LOC=  7 L 545-551  selectAll()
+    CC= 1 LOC=  7 L 850-856  setConstrainerVisible(boolean)
+    CC= 1 LOC=  6 L 341-346  printComponent(Graphics)
+    CC= 1 LOC=  6 L 476-481  repaintDrawingArea(Rectangle2D.Double)
+    CC= 1 LOC=  6 L 826-831  setVisibleConstrainer(Constrainer)
+    CC= 1 LOC=  6 L 838-843  setInvisibleConstrainer(Constrainer)
+    CC= 1 LOC=  5 L 483-487  invalidate()
+    CC= 1 LOC=  5 L 489-493  removeNotify()
+    CC= 1 LOC=  5 L 614-618  findHandle(Point)
+    CC= 1 LOC=  5 L 625-629  getCompatibleHandles(Handle)
+    CC= 1 LOC=  5 L 708-712  setBounds(int, int, int, int)
+    CC= 1 LOC=  5 L 879-883  setDrawingDoubleBuffered(boolean)
+    CC= 1 LOC=  4 L 140-143  fillFullViewWithBackgroundTile(Graphics2D, int, int)
+    CC= 1 LOC=  4 L 145-148  createTranslucentCanvasColor(Color, double)
+    CC= 1 LOC=  4 L 150-153  isSelectionEmpty()
+    CC= 1 LOC=  4 L 263-266  getDrawing()
+    CC= 1 LOC=  4 L 496-499  addToSelection(Figure)
+    CC= 1 LOC=  4 L 564-567  isFigureSelected(Figure)
+    CC= 1 LOC=  4 L 572-575  getSelectedFigures()
+    CC= 1 LOC=  4 L 578-581  getSelectionCount()
+    CC= 1 LOC=  4 L 584-587  getSelectionHandles()
+    CC= 1 LOC=  4 L 590-593  getSecondaryHandles()
+    CC= 1 LOC=  4 L 604-607  validateHandles()
+    CC= 1 LOC=  4 L 654-657  addFigureSelectionListener(FigureSelectionListener)
+    CC= 1 LOC=  4 L 659-662  removeFigureSelectionListener(FigureSelectionListener)
+    CC= 1 LOC=  4 L 698-701  getPreferredSize()
+    CC= 1 LOC=  4 L 727-730  drawingToView(Point2D.Double)
+    CC= 1 LOC=  4 L 732-735  drawingToView(Rectangle2D.Double)
+    CC= 1 LOC=  4 L 738-741  viewToDrawing(Point)
+    CC= 1 LOC=  4 L 743-746  viewToDrawing(Rectangle)
+    CC= 1 LOC=  4 L 748-751  getComponent()
+    CC= 1 LOC=  4 L 753-756  getScaleFactor()
+    CC= 1 LOC=  4 L 788-791  getHandleDetailLevel()
+    CC= 1 LOC=  4 L 793-796  getDrawingToViewTransform()
+    CC= 1 LOC=  4 L 798-801  delete()
+    CC= 1 LOC=  4 L 803-806  duplicate()
+    CC= 1 LOC=  4 L 833-836  getVisibleConstrainer()
+    CC= 1 LOC=  4 L 845-848  getInvisibleConstrainer()
+    CC= 1 LOC=  4 L 858-861  isConstrainerVisible()
+    CC= 1 LOC=  4 L 911-914  getEditor()
+    CC= 1 LOC=  4 L 928-931  getActiveHandle()
+    CC= 1 LOC=  3 L 251-253  createEventHandler()
+    CC= 1 LOC=  3 L 259-261  initComponents()
+    CC= 1 LOC=  3 L 348-350  setViewRenderingHints(Graphics2D)
+    CC= 1 LOC=  3 L 376-378  getCanvasViewBounds()
+    CC= 1 LOC=  3 L 689-691  invalidateDimension()
+    CC= 1 LOC=  3 L 703-705  getDrawingArea()
+    CC= 1 LOC=  3 L 770-772  fireViewTransformChanged()
+    CC= 1 LOC=  3 L 886-888  isDrawingDoubleBuffered()
+    CC= 2 LOC= 20 L 296-315  paintComponent(Graphics)
+    CC= 2 LOC= 15 L 895-909  getBackgroundPaint(int, int)
+    CC= 2 LOC=  9 L 391-399  drawConstrainer(Graphics2D)
+    CC= 2 LOC=  9 L 515-523  removeFromSelection(Figure)
+    CC= 2 LOC=  8 L  93-100  repaintHandles()
+    CC= 2 LOC=  8 L 529-536  toggleSelection(Figure)
+    CC= 2 LOC=  8 L 554-561  clearSelection()
+    CC= 2 LOC=  7 L 718-724  validateViewTranslation()
+    CC= 2 LOC=  6 L 469-474  paint(Graphics)
+    CC= 2 LOC=  6 L 596-601  invalidateHandles()
+    CC= 2 LOC=  5 L 385-389  drawCanvas(Graphics2D)
+    CC= 2 LOC=  5 L 538-542  setEnabled(boolean)
+    CC= 2 LOC=  5 L 636-640  findFigure(Point)
+    CC= 2 LOC=  5 L 642-646  findFigures(Rectangle)
+    CC= 2 LOC=  5 L 648-652  findFiguresWithin(Rectangle)
+    CC= 2 LOC=  4 L 693-696  getConstrainer()
+    CC= 2 LOC=  3 L 288-290  getEmptyDrawingMessage()
+    CC= 3 LOC= 18 L 121-138  drawInfiniteCanvasBackground(Graphics2D)
+    CC= 3 LOC= 18 L 352-369  applyRenderingHints(Graphics2D, boolean)
+    CC= 3 LOC= 13 L 774-786  setHandleDetailLevel(int)
+    CC= 3 LOC= 11 L 276-286  setEmptyDrawingMessage(String)
+    CC= 3 LOC= 11 L 502-512  addToSelection(Collection<Figure>)
+    CC= 3 LOC= 11 L 916-926  setActiveHandle(Handle)
+    CC= 3 LOC=  7 L 268-274  getToolTipText(MouseEvent)
+    CC= 4 LOC= 28 L 440-467  setDrawing(Drawing)
+    CC= 4 LOC= 17 L 103-119  drawBackground(Graphics2D)
+    CC= 4 LOC= 10 L 401-410  drawDrawing(Graphics2D)
+    CC= 4 LOC=  5 L 434-438  drawTool(Graphics2D)
+    CC= 5 LOC= 20 L 668-687  fireSelectionChanged(Set<Figure>, Set<Figure>)
+    CC= 5 LOC= 11 L 422-432  drawHandles(Graphics2D)
+
+Class EventHandler (DefaultDrawingView.java:155-235)
+  Coupled types (11): AttributeKey, AttributeKeys, CANVAS_HEIGHT, CANVAS_WIDTH, DefaultDrawingView, DrawingEvent, DrawingListener, FocusEvent, FocusListener, HandleEvent, HandleListener
+  Methods sorted by CC desc:
+    CC= 1 LOC=  6 L 210-215  handleRequestRemove(HandleEvent)
+    CC= 1 LOC=  5 L 188-192  areaInvalidated(HandleEvent)
+    CC= 1 LOC=  5 L 194-198  handleRequestSecondaryHandles(HandleEvent)
+    CC= 1 LOC=  2 L 207-208  focusLost(FocusEvent)
+    CC= 1 LOC=  2 L 233-234  figureChanged(DrawingEvent)
+    CC= 2 LOC=  7 L 157-163  drawingChanged(DrawingEvent)
+    CC= 2 LOC=  6 L 200-205  focusGained(FocusEvent)
+    CC= 3 LOC= 11 L 176-186  figureRemoved(DrawingEvent)
+    CC= 3 LOC= 10 L 165-174  figureAdded(DrawingEvent)
+    CC= 5 LOC= 15 L 217-231  drawingAttributeChanged(DrawingEvent)
+
+Class DrawingViewBuffer (DrawingViewBuffer.java:20-289)
+  Coupled types (12): AlphaComposite, BufferedImage, Color, Consumer, Graphics2D, GraphicsConfiguration, Image, Locale, Point, Rectangle, Transparency, VolatileImage
+  Methods sorted by CC desc:
+    CC= 1 LOC=  4 L  52-55   flush()
+    CC= 1 LOC=  3 L  41-43   isDoubleBuffered()
+    CC= 1 LOC=  3 L  77-79   markBufferedAreaDirty()
+    CC= 1 LOC=  3 L  81-83   resetDirtyToBufferedArea()
+    CC= 1 LOC=  3 L  85-87   translateBufferedArea(int, int)
+    CC= 1 LOC=  3 L  89-91   getBufferedArea()
+    CC= 1 LOC=  3 L  93-95   getDirtyArea()
+    CC= 2 LOC= 12 L  97-108  drawBuffered(Graphics2D, Rectangle, GraphicsConfiguration, Consumer<Graphics2D>, Consumer<Graphics2D>)
+    CC= 2 LOC=  6 L  45-50   setDoubleBuffered(boolean)
+    CC= 2 LOC=  6 L  57-62   flushVolatile()
+    CC= 2 LOC=  6 L  64-69   flushNonvolatile()
+    CC= 2 LOC=  5 L  71-75   markDirty(Rectangle)
+    CC= 3 LOC= 27 L 262-288  renderDirtyRegion(Graphics2D, int, int, Point, Consumer<Graphics2D>, Consumer<Graphics2D>)
+    CC= 3 LOC=  9 L  31-39   detectWindowsOs()
+    CC= 8 LOC= 45 L 166-210  drawNonvolatile(Graphics2D, Rectangle, GraphicsConfiguration, Consumer<Graphics2D>, Consumer<Graphics2D>)
+    CC=12 LOC= 55 L 110-164  drawVolatile(Graphics2D, Rectangle, GraphicsConfiguration, Consumer<Graphics2D>, Consumer<Graphics2D>)
+    CC=13 LOC= 49 L 212-260  prepareBufferedArea(Rectangle, boolean)
+
+Class DrawingViewViewport (DrawingViewViewport.java:18-214)
+  Coupled types (8): AffineTransform, Dimension, Drawing, Insets, Point, Point2D, Rectangle, Rectangle2D
+  Methods sorted by CC desc:
+    CC= 1 LOC= 10 L  77-86   computeFixedCanvasPreferredSize(Rectangle2D.Double, double, double, Insets)
+    CC= 1 LOC=  9 L  67-75   computeInfiniteCanvasPreferredSize(Rectangle2D.Double, Insets)
+    CC= 1 LOC=  7 L 182-188  drawingToView(Rectangle2D.Double)
+    CC= 1 LOC=  7 L 195-201  viewToDrawing(Rectangle)
+    CC= 1 LOC=  6 L 203-208  getDrawingToViewTransform()
+    CC= 1 LOC=  4 L  39-42   invalidateDimension()
+    CC= 1 LOC=  4 L 177-180  drawingToView(Point2D.Double)
+    CC= 1 LOC=  4 L 190-193  viewToDrawing(Point)
+    CC= 1 LOC=  4 L 210-213  applyToTransform(AffineTransform)
+    CC= 1 LOC=  3 L  25-27   getScaleFactor()
+    CC= 3 LOC=  9 L  29-37   setScaleFactor(double)
+    CC= 3 LOC=  7 L  44-50   getDrawingArea(Drawing)
+    CC= 4 LOC= 25 L  94-118  updateTranslation(Drawing, int, int, Insets)
+    CC= 4 LOC= 16 L 160-175  getCanvasViewBounds(Drawing, int, int)
+    CC= 5 LOC= 23 L 120-142  computeInitialTranslation(int, int, Insets, Double, Double)
+    CC= 5 LOC= 15 L 144-158  clampTranslationToDrawing(int, int, Insets, Rectangle)
+    CC= 6 LOC= 14 L  52-65   getPreferredSize(Drawing, Insets)
+
+Class DrawingViewHandleManager (DrawingViewHandleManager.java:21-242)
+  Coupled types (15): ArrayList, Collection, Collections, Consumer, DrawingEditor, DrawingView, Figure, Handle, HandleListener, HashSet, List, Point, Rectangle, ReversedList, Set
+  Methods sorted by CC desc:
+    CC= 1 LOC=  9 L  51-59   getSelectionHandles(DrawingView, DrawingEditor, Set<Figure>, HandleListener, Consumer<Rectangle>)
+    CC= 1 LOC=  9 L  61-69   getSecondaryHandles(DrawingView, DrawingEditor, Set<Figure>, HandleListener, Consumer<Rectangle>)
+    CC= 1 LOC=  6 L 145-150  removeHandle(Handle, HandleListener)
+    CC= 1 LOC=  5 L  45-49   replaceActiveHandle(Handle)
+    CC= 1 LOC=  3 L  29-31   areHandlesValid()
+    CC= 1 LOC=  3 L  33-35   getDetailLevel()
+    CC= 1 LOC=  3 L  37-39   setDetailLevel(int)
+    CC= 1 LOC=  3 L  41-43   getActiveHandle()
+    CC= 2 LOC= 11 L 220-230  disposeHandles(List<Handle>, HandleListener, Rectangle)
+    CC= 2 LOC= 10 L  86-95   invalidate(HandleListener, Runnable)
+    CC= 3 LOC= 16 L 194-209  computeAllHandlesArea(DrawingView, DrawingEditor, Set<Figure>, HandleListener, Consumer<Rectangle>)
+    CC= 3 LOC= 13 L 119-131  populateSelectionHandles(DrawingView, Set<Figure>, HandleListener)
+    CC= 3 LOC= 11 L 133-143  setSecondaryHandles(Handle, DrawingView, HandleListener)
+    CC= 3 LOC= 10 L 232-241  unionArea(Rectangle, Rectangle)
+    CC= 3 LOC=  8 L 211-218  fireViewTransformChanged()
+    CC= 4 LOC= 20 L 173-192  getCompatibleHandles(Handle, DrawingView, DrawingEditor, Set<Figure>, HandleListener, Consumer<Rectangle>)
+    CC= 4 LOC= 14 L  71-84   createHandlesForFigure(Figure, DrawingView, HandleListener, Rectangle)
+    CC= 5 LOC= 20 L 152-171  findHandle(Point, DrawingView, DrawingEditor, Set<Figure>, HandleListener, Consumer<Rectangle>)
+    CC= 6 LOC= 21 L  97-117  validate(DrawingView, DrawingEditor, Set<Figure>, HandleListener, Consumer<Rectangle>)
+
+Class DrawingViewSelectionManager (DrawingViewSelectionManager.java:17-119)
+  Coupled types (13): Collection, Collections, Drawing, DrawingView, DrawingViewHandleManager, Figure, FigureListener, HandleListener, HashSet, LinkedHashSet, Rectangle, SelectionDelta, Set
+  Methods sorted by CC desc:
+    CC= 1 LOC=  3 L  24-26   DrawingViewSelectionManager(FigureListener)
+    CC= 1 LOC=  3 L  28-30   getSelectedFigures()
+    CC= 1 LOC=  3 L  32-34   getMutableSelection()
+    CC= 1 LOC=  3 L  36-38   getSelectionCount()
+    CC= 1 LOC=  3 L  40-42   isSelectionEmpty()
+    CC= 1 LOC=  3 L  44-46   isFigureSelected(Figure)
+    CC= 2 LOC=  9 L  93-101  clear()
+    CC= 2 LOC=  8 L  69-76   remove(Figure)
+    CC= 2 LOC=  5 L 103-107  detachAllFigureListeners()
+    CC= 3 LOC= 20 L  48-67   addAll(Collection<Figure>, DrawingView, DrawingViewHandleManager, HandleListener)
+    CC= 4 LOC= 14 L  78-91   selectAll(Drawing)
+
+Class SelectionDelta (DrawingViewSelectionManager.java:109-118)
+  Coupled types (4): Collections, Figure, Rectangle, Set
+  Methods sorted by CC desc:
+    CC= 1 LOC=  3 L 115-117  unchanged()
+
+Class DrawingViewEditCommands (DrawingViewEditCommands.java:19-153)
+  Coupled types (11): AffineTransform, ArrayList, Collection, DeleteFiguresEdit, Drawing, DrawingView, DuplicateFiguresEdit, Figure, HashMap, List, Map
+  Methods sorted by CC desc:
+    CC= 1 LOC=  1 L  25-25   DrawingViewEditCommands()
+    CC= 5 LOC= 27 L  52-78   duplicate(DrawingView)
+    CC= 6 LOC= 24 L  27-50   delete(DrawingView, Runnable)
+
+Class DeleteFiguresEdit (DrawingViewEditCommands.java:80-122)
+  Coupled types (8): AbstractUndoableEdit, CannotRedoException, CannotUndoException, Drawing, DrawingView, Figure, List, ResourceBundleUtil
+  Methods sorted by CC desc:
+    CC= 1 LOC= 10 L  88-97   DeleteFiguresEdit(DrawingView, Drawing, List<Figure>, int[])
+    CC= 1 LOC=  5 L  99-103  getPresentationName()
+    CC= 2 LOC=  9 L 105-113  undo()
+    CC= 2 LOC=  7 L 115-121  redo()
+
+Class DuplicateFiguresEdit (DrawingViewEditCommands.java:124-152)
+  Coupled types (7): AbstractUndoableEdit, CannotRedoException, CannotUndoException, Drawing, Figure, List, ResourceBundleUtil
+  Methods sorted by CC desc:
+    CC= 1 LOC=  5 L 135-139  getPresentationName()
+    CC= 1 LOC=  5 L 141-145  undo()
+    CC= 1 LOC=  5 L 147-151  redo()
+    CC= 1 LOC=  4 L 130-133  DuplicateFiguresEdit(Drawing, List<Figure>)
+

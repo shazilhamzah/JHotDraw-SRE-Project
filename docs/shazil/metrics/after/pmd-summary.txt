@@ -1,0 +1,7 @@
+﻿Total PMD violations across DefaultDrawingView + 5 extracted classes: 0
+DrawingViewEditCommands.java PMD violations: 0
+DrawingViewSelectionManager.java PMD violations: 0
+DrawingViewHandleManager.java PMD violations: 0
+DrawingViewViewport.java PMD violations: 0
+DrawingViewBuffer.java PMD violations: 0
+DefaultDrawingView.java PMD violations: 0
