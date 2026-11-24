@@ -1,0 +1,58 @@
+name: Hassan SVG baseline
+on:
+  push:
+    branches: [hassan-svg-refactoring]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+          cache-dependency-path: jhotdraw-src/**/pom.xml
+      - name: Run SVG module and dependency tests
+        working-directory: jhotdraw-src
+        run: mvn -B -pl jhotdraw-samples/jhotdraw-samples-misc -am test -Djava.awt.headless=true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-reports
+          path: jhotdraw-src/**/target/surefire-reports/
+  metrics:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Build CK metrics tool
+        run: |
+          git clone --depth 1 https://github.com/mauricioaniche/ck.git /tmp/ck
+          mvn -B -f /tmp/ck/pom.xml package -DskipTests
+      - name: Collect CK metrics
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/metrics"
+          JAR=$(find /tmp/ck/target -name '*jar-with-dependencies.jar' -print -quit)
+          test -n "$JAR"
+          java -jar "$JAR" "$GITHUB_WORKSPACE/jhotdraw-src" false 0 true "$GITHUB_WORKSPACE/metrics/"
+          grep 'SVGInputFormat' metrics/class.csv
+      - name: PMD complexity analysis
+        if: always()
+        run: |
+          mkdir -p metrics
+          mvn -B dependency:copy -Dartifact=net.sourceforge.pmd:pmd-dist:7.17.0:zip -DoutputDirectory=/tmp/pmd
+          unzip -q /tmp/pmd/*.zip -d /tmp/pmd
+          PMD=$(find /tmp/pmd -path '*/bin/pmd' -print -quit)
+          "$PMD" check -d jhotdraw-src/jhotdraw-samples/jhotdraw-samples-misc/src/main/java/org/jhotdraw/samples/svg/io/SVGInputFormat.java -R category/java/design.xml -f xml -r metrics/pmd.xml --no-fail-on-violation
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: baseline-metrics
+          path: metrics/
