@@ -100,4 +100,44 @@ class SVGImportIntegrationTest {
     read("<s:svg xmlns:s='http://www.w3.org/2000/svg'><s:rect width='20' height='30'/></s:svg>", drawing, true);
     assertEquals(1, drawing.getChildren().size());
   }
+
+  @Test
+  void readsFileAndUrl(@org.junit.jupiter.api.io.TempDir java.nio.file.Path dir) throws IOException {
+    java.nio.file.Path file = dir.resolve("drawing.svg");
+    java.nio.file.Files.writeString(file, svg("<rect width='20' height='30'/>"));
+    SVGInputFormat format = new SVGInputFormat();
+    DefaultDrawing drawing = new DefaultDrawing();
+    format.read(file.toFile(), drawing, true);
+    assertEquals(1, drawing.getChildren().size());
+    format.read(file.toUri().toURL(), drawing, false);
+    assertEquals(2, drawing.getChildren().size());
+  }
+
+  @Test
+  void reusesReaderAndReplacesDrawing() throws IOException {
+    SVGInputFormat format = new SVGInputFormat();
+    DefaultDrawing drawing = new DefaultDrawing();
+    byte[] data = svg("<rect width='20' height='30'/>").getBytes(StandardCharsets.UTF_8);
+    format.read(new ByteArrayInputStream(data), drawing, true);
+    format.read(new ByteArrayInputStream(data), drawing, false);
+    assertEquals(2, drawing.getChildren().size());
+    format.read(new ByteArrayInputStream(data), drawing, true);
+    assertEquals(1, drawing.getChildren().size());
+  }
+
+  @Test
+  void rejectsMalformedXml() {
+    assertThrows(IOException.class, () -> read("<svg>", new DefaultDrawing(), true));
+  }
+
+  @Test
+  void rectangleGeometryIsPreserved() throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(svg("<rect x='10' y='20' width='30' height='40'/>"), drawing, true);
+    java.awt.geom.Rectangle2D bounds = drawing.getChildren().get(0).getBounds();
+    assertEquals(10, bounds.getX(), 0.001);
+    assertEquals(20, bounds.getY(), 0.001);
+    assertEquals(30, bounds.getWidth(), 0.001);
+    assertEquals(40, bounds.getHeight(), 0.001);
+  }
 }
