@@ -28,6 +28,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -42,7 +44,8 @@ jobs:
           JAR=$(find /tmp/ck/target -name '*jar-with-dependencies.jar' -print -quit)
           test -n "$JAR"
           java -jar "$JAR" "$GITHUB_WORKSPACE/jhotdraw-src" false 0 true "$GITHUB_WORKSPACE/metrics/"
-          grep 'SVGInputFormat' metrics/class.csv
+          head -n 1 metrics/class.csv
+          grep -E 'SVGInputFormat,|SVGPathParser,' metrics/class.csv
       - name: PMD complexity analysis
         if: always()
         run: |
@@ -52,6 +55,25 @@ jobs:
           unzip -q /tmp/pmd/*.zip -d /tmp/pmd
           PMD=$(find /tmp/pmd -path '*/bin/pmd' -print -quit)
           "$PMD" check -d jhotdraw-src/jhotdraw-samples/jhotdraw-samples-misc/src/main/java/org/jhotdraw/samples/svg/io/SVGInputFormat.java -R category/java/design.xml -f xml -r metrics/pmd.xml --no-fail-on-violation
+      - name: Compare original and refactored metrics
+        run: |
+          git worktree add --detach /tmp/svg-original 4533afd
+          mkdir -p metrics/original
+          JAR=$(find /tmp/ck/target -name '*jar-with-dependencies.jar' -print -quit)
+          java -jar "$JAR" /tmp/svg-original/jhotdraw-src false 0 true "$GITHUB_WORKSPACE/metrics/original/"
+          PMD=$(find /tmp/pmd -path '*/bin/pmd' -print -quit)
+          "$PMD" check -d /tmp/svg-original/jhotdraw-src/jhotdraw-samples/jhotdraw-samples-misc/src/main/java/org/jhotdraw/samples/svg/io/SVGInputFormat.java -R category/java/design.xml -f xml -r metrics/original/pmd.xml --no-fail-on-violation
+          python3 - <<'PY'
+          import csv, collections, xml.etree.ElementTree as ET
+          for label, prefix in [('Before', 'metrics/original/'), ('After', 'metrics/')]:
+              print(label)
+              with open(prefix + 'class.csv') as f:
+                  for row in csv.DictReader(f):
+                      if row['class'].endswith(('.SVGInputFormat', '.SVGPathParser')):
+                          print(row)
+              counts = collections.Counter(v.attrib['rule'] for v in ET.parse(prefix + 'pmd.xml').getroot().iter() if v.tag.split('}')[-1] == 'violation')
+              print('PMD total:', sum(counts.values()), dict(counts))
+          PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:
