@@ -471,4 +471,28 @@ class SVGImportIntegrationTest {
     read(svg("<rect width='20%' height='30'/>"), drawing, true);
     assertEquals(40.0, drawing.getChildren().get(0).getBounds().getWidth(), 0.001);
   }
+  @org.junit.jupiter.params.ParameterizedTest
+  @org.junit.jupiter.params.provider.CsvSource(value = {
+      "translate(10,20);10;20;20;30",
+      "scale(2,3);0;0;40;90",
+      "matrix(1,0,0,1,10,20);10;20;20;30",
+      "translate(10,20) scale(2);10;20;40;60",
+      "rotate(90);-30;0;30;20",
+      "skewX(45);0;0;50;30",
+      "skewY(45);0;0;20;50"
+  }, delimiter = ';')
+  void preservesTransformedRectangleGeometry(String operation, double x, double y,
+      double width, double height) throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(svg("<rect width='20' height='30' transform='" + operation + "'/>"), drawing, true);
+    assertEquals(1, drawing.getChildren().size());
+    var figure = drawing.getChildren().get(0);
+    var transform = org.jhotdraw.samples.svg.SVGAttributeKeys.TRANSFORM.get(figure);
+    var bounds = transform == null ? figure.getBounds()
+        : transform.createTransformedShape(figure.getBounds()).getBounds2D();
+    assertEquals(x, bounds.getX(), 0.001);
+    assertEquals(y, bounds.getY(), 0.001);
+    assertEquals(width, bounds.getWidth(), 0.001);
+    assertEquals(height, bounds.getHeight(), 0.001);
+  }
 }
