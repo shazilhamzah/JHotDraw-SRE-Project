@@ -345,7 +345,10 @@ class SVGImportIntegrationTest {
     DefaultDrawing drawing = new DefaultDrawing();
     read("<svg xmlns='http://www.w3.org/2000/svg' width='200' height='100' "
         + "viewBox='0 0 50 50'><rect width='10' height='20'/></svg>", drawing, true);
-    var bounds = drawing.getChildren().get(0).getBounds();
+    var figure = drawing.getChildren().get(0);
+    var transform = org.jhotdraw.samples.svg.SVGAttributeKeys.TRANSFORM.get(figure);
+    assertNotNull(transform);
+    var bounds = transform.createTransformedShape(figure.getBounds()).getBounds2D();
     assertEquals(20, bounds.getWidth(), 0.001);
     assertEquals(40, bounds.getHeight(), 0.001);
   }
@@ -355,7 +358,10 @@ class SVGImportIntegrationTest {
     DefaultDrawing drawing = new DefaultDrawing();
     read(svg("<svg width='100' height='50' viewBox='0 0 50 50' preserveAspectRatio='none'>"
         + "<rect width='10' height='20'/></svg>"), drawing, true);
-    var bounds = drawing.getChildren().get(0).getBounds();
+    var figure = drawing.getChildren().get(0);
+    var transform = org.jhotdraw.samples.svg.SVGAttributeKeys.TRANSFORM.get(figure);
+    assertNotNull(transform);
+    var bounds = transform.createTransformedShape(figure.getBounds()).getBounds2D();
     assertEquals(20, bounds.getWidth(), 0.001);
     assertEquals(20, bounds.getHeight(), 0.001);
   }
