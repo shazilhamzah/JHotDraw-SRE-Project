@@ -434,4 +434,26 @@ class SVGImportIntegrationTest {
     assertEquals(1, drawing.getChildren().size());
     assertEquals(expected, drawing.getChildren().get(0).getBounds().getWidth(), 0.001);
   }
+  @Test
+  void strokeWidthAndPaintOpacityArePreserved() throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(svg("<rect width='20' height='30' stroke='blue' stroke-width='3' "
+        + "stroke-opacity='0.4' fill='red' fill-opacity='0.6'/>"), drawing, true);
+    var figure = drawing.getChildren().get(0);
+    assertEquals(3.0, org.jhotdraw.samples.svg.SVGAttributeKeys.STROKE_WIDTH.get(figure), 0.001);
+    assertEquals(0.4, org.jhotdraw.samples.svg.SVGAttributeKeys.STROKE_OPACITY.get(figure), 0.001);
+    assertEquals(0.6, org.jhotdraw.samples.svg.SVGAttributeKeys.FILL_OPACITY.get(figure), 0.001);
+  }
+
+  @org.junit.jupiter.params.ParameterizedTest
+  @org.junit.jupiter.params.provider.ValueSource(strings = {"linearGradient", "radialGradient"})
+  void resolvesGradientPaint(String kind) throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(svg("<defs><" + kind + " id='p'><stop offset='0' stop-color='red'/>"
+        + "<stop offset='1' stop-color='blue'/></" + kind + "></defs>"
+        + "<rect width='20' height='30' fill='url(#p)'/>"), drawing, true);
+    assertEquals(1, drawing.getChildren().size());
+    assertNotNull(org.jhotdraw.samples.svg.SVGAttributeKeys.FILL_GRADIENT.get(
+        drawing.getChildren().get(0)));
+  }
 }
