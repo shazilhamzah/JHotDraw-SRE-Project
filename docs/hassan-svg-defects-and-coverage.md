@@ -14,20 +14,23 @@ DOM parsing returns a Document, not an Element; the fix also avoids unsafe casts
 
 Regression tests are in SVGImportIntegrationTest.java: importsEmptySvgDocument (18), importsRectangleWithWhitespaceAndComment (25), clipboardHonorsReplace (180), useResolvesUnprefixedHref (254), switchMatchesLanguageTagIgnoringCase (262), circularUseDoesNotPreventOtherFigures (278), indirectCircularUseDoesNotPreventOtherFigures (287), repeatedValidReferencesAreNotTreatedAsCycles (296), circularReferenceDoesNotBlockLaterValidReference (304). Final [run 20](https://github.com/shazilhamzah/JHotDraw-SRE-Project/actions/runs/45391062840): 80 SVG tests, 105 executed overall, all passed.
 
-## TASKS.md audit
+## TASKS.md audit — verified at f75c2f5
 
-| Requirement | Evidence / limitation |
+[CI run 33](https://github.com/shazilhamzah/JHotDraw-SRE-Project/actions/runs/45398839764): 84 integration, 6 importer unit, 4 parser unit and 25 existing tests; 119 total, zero failures, errors or skips. Both jobs succeeded after retrying the Maven Central HTTP 429 failure.
+
+| Requirement | Evidence / remaining limitation |
 |---|---|
-| Tokenizers, filter, flavor | SVGInputFormatTest covers all named helpers; chained and malformed transform tests also present. |
-| Input modes, replace, reuse, invalid XML/root | Integration tests cover stream, file, URL, clipboard replacement, stream append and reuse, malformed and missing root. Clipboard append not explicitly asserted. |
-| Viewport, units, nested SVG | Nested SVG with viewBox and all eight requested units exercised; pixel geometry asserted exactly. Explicit preserveAspectRatio and exact non-pixel conversions remain gaps. |
-| CSS and inheritance | Stylesheet, inline style, inherit, currentcolor exercised; inline paint and currentcolor asserted. Exact inherited font and stylesheet values remain gaps. |
-| Shapes and path commands | All seven shape types and all listed uppercase/lowercase path commands exercised; rectangle geometry asserted. Most other assertions count figures rather than verify geometry. |
-| Transforms | All six functions and chained transforms exercised; not all exact transformed coordinates asserted. |
-| Paint, gradients, links, visibility, switch, references | Gradient types, solidColor, opacity, stroke dash, links, display, switch feature/language, id/xml:id and both href forms exercised. Exact gradient/stroke/link properties and visibility=hidden not explicitly asserted. |
-| Text and images | text, textArea, tspan, xml:space, explicit font size, Base64, relative raster/nested SVG, missing raster exercised. Image content and text whitespace not asserted; successful relative URL image loading not explicitly checked. |
-| Extracted parser | SVGPathParserTest covers separate subpaths, empty input, missing coordinate and reuse. |
-| Metrics | docs/hassan-svg-metrics.md; PMD scope limitation documented. |
-| Architecture, patterns, refactoring catalog, PR | Pending. |
+| Tokenizers, filter, flavor | All named helpers exercised in SVGInputFormatTest. |
+| Input modes, replace, reuse, invalid XML/root | Stream, file, URL, clipboard append and replacement, reuse and malformed/missing root tested. |
+| Viewport, units, nested SVG | Uniform and independent scaling asserted; px and five physical units asserted exactly using legacy 90 DPI. Percent and em only checked for positive width. |
+| CSS and inheritance | Inline paint, currentcolor and inherited font size asserted; stylesheet and inherited fill exercised but not exactly asserted. |
+| Shapes and path commands | All named shapes and commands exercised; rectangle, circle and ellipse bounds asserted. Detailed geometry for other shapes and commands remains incomplete. |
+| Transforms | All six functions and chained transforms exercised; exact coordinates not asserted for all. |
+| Paint, gradients, links, visibility, switch, references | Stroke width, fill/stroke opacity, gradient resolution, hidden exclusion, switch selection and reference cycles asserted. Gradient stop values, dash properties, link values and solidColor values not fully asserted. |
+| Text and images | All named text/image features exercised; explicit/inherited font and relative URL raster pixels asserted. Text whitespace and nested SVG image content not fully asserted. |
+| Extracted parser | Four focused tests. |
+| Metrics | Expanded CK/PMD results in docs/hassan-svg-report.md, run 29. |
+| Architecture, patterns, refactoring catalog | Documented in docs/hassan-svg-architecture.md and docs/hassan-svg-refactorings.md. |
+| PR | Pending review submission. |
 
-Passing tests are not proof of exhaustive behavioral coverage. Several feature tests assert only figure counts; remaining gaps should be addressed or disclosed before final submission.
+All named feature categories have tests, but exhaustive behavioral and edge-case coverage is not established. No coverage percentage is claimed. The earlier run 20 evidence above is historical.
