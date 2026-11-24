@@ -314,16 +314,15 @@ class SVGImportIntegrationTest {
     DefaultDrawing drawing = new DefaultDrawing();
     read(svg("<rect width='20' height='30' style='fill:red;stroke:blue'/>"), drawing, true);
     var figure = drawing.getChildren().get(0);
-    assertEquals(java.awt.Color.RED, figure.get(org.jhotdraw.samples.svg.SVGAttributeKeys.FILL_COLOR));
-    assertEquals(java.awt.Color.BLUE, figure.get(org.jhotdraw.samples.svg.SVGAttributeKeys.STROKE_COLOR));
+    assertEquals(java.awt.Color.RED, org.jhotdraw.samples.svg.SVGAttributeKeys.FILL_COLOR.get(figure));
+    assertEquals(java.awt.Color.BLUE, org.jhotdraw.samples.svg.SVGAttributeKeys.STROKE_COLOR.get(figure));
   }
 
   @Test
   void currentColorIsResolved() throws IOException {
     DefaultDrawing drawing = new DefaultDrawing();
     read(svg("<rect width='20' height='30' color='red' fill='currentcolor'/>"), drawing, true);
-    assertEquals(java.awt.Color.RED, drawing.getChildren().get(0)
-        .get(org.jhotdraw.samples.svg.SVGAttributeKeys.FILL_COLOR));
+    assertEquals(java.awt.Color.RED, org.jhotdraw.samples.svg.SVGAttributeKeys.FILL_COLOR.get(drawing.getChildren().get(0)));
   }
 
   @Test
@@ -338,7 +337,6 @@ class SVGImportIntegrationTest {
   void explicitFontSizeIsPreserved() throws IOException {
     DefaultDrawing drawing = new DefaultDrawing();
     read(svg("<text x='10' y='30' font-size='18'>Hello</text>"), drawing, true);
-    assertEquals(18.0, drawing.getChildren().get(0)
-        .get(org.jhotdraw.samples.svg.SVGAttributeKeys.FONT_SIZE), 0.001);
+    assertEquals(18.0, org.jhotdraw.samples.svg.SVGAttributeKeys.FONT_SIZE.get(drawing.getChildren().get(0)), 0.001);
   }
 }
