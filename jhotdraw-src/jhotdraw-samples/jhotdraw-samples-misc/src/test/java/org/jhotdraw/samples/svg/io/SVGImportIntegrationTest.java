@@ -456,4 +456,19 @@ class SVGImportIntegrationTest {
     assertNotNull(org.jhotdraw.samples.svg.SVGAttributeKeys.FILL_GRADIENT.get(
         drawing.getChildren().get(0)));
   }
+  @Test
+  void stylesheetFillIsApplied() throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(svg("<style type='text/css'>rect { fill: red; }</style>"
+        + "<rect width='20' height='30'/>"), drawing, true);
+    assertEquals(java.awt.Color.RED, org.jhotdraw.samples.svg.SVGAttributeKeys.FILL_COLOR.get(
+        drawing.getChildren().get(0)));
+  }
+
+  @Test
+  void percentageWidthUsesViewport() throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(svg("<rect width='20%' height='30'/>"), drawing, true);
+    assertEquals(40.0, drawing.getChildren().get(0).getBounds().getWidth(), 0.001);
+  }
 }
