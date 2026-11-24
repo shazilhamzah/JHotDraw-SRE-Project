@@ -922,13 +922,13 @@ public class SVGInputFormat implements InputFormat {
         for (String lng : systemLanguage) {
           int p = lng.indexOf('-');
           if (p == -1) {
-            if (locale.getLanguage().equals(lng)) {
+            if (locale.getLanguage().equalsIgnoreCase(lng)) {
               isMatch = true;
               break;
             }
           } else {
-            if (locale.getLanguage().equals(lng.substring(0, p))
-                && locale.getCountry().toLowerCase().equals(lng.substring(p + 1))) {
+            if (locale.getLanguage().equalsIgnoreCase(lng.substring(0, p))
+                && locale.getCountry().equalsIgnoreCase(lng.substring(p + 1))) {
               isMatch = true;
               break;
             }
@@ -947,6 +947,9 @@ public class SVGInputFormat implements InputFormat {
     }
     return null;
   }
+
+  private final java.util.Set<Element> activeUseReferences =
+      java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
 
   /** Reads an SVG "use" element. */
   @SuppressWarnings("unchecked")
@@ -967,7 +970,16 @@ public class SVGInputFormat implements InputFormat {
       if (refElem == null) {
         LOG.warning("SVGInputFormat couldn't find href for <use> element:" + href);
       } else {
-        Figure obj = readElement(refElem);
+        if (!activeUseReferences.add(refElem)) {
+          LOG.warning("SVGInputFormat skipping circular use reference: " + href);
+          return null;
+        }
+        Figure obj;
+        try {
+          obj = readElement(refElem);
+        } finally {
+          activeUseReferences.remove(refElem);
+        }
         if (obj != null) {
           Figure figure = obj.clone();
           for (Map.Entry<AttributeKey<?>, Object> entry : a2.entrySet()) {
