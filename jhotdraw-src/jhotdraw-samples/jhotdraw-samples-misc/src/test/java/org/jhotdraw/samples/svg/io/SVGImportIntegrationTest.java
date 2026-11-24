@@ -308,4 +308,37 @@ class SVGImportIntegrationTest {
     assertEquals(1, drawing.getChildren().size());
     assertEquals(20, drawing.getChildren().get(0).getBounds().getWidth(), 0.001);
   }
+
+  @Test
+  void inlinePaintValuesArePreserved() throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(svg("<rect width='20' height='30' style='fill:red;stroke:blue'/>"), drawing, true);
+    var figure = drawing.getChildren().get(0);
+    assertEquals(java.awt.Color.RED, figure.get(org.jhotdraw.samples.svg.SVGAttributeKeys.FILL_COLOR));
+    assertEquals(java.awt.Color.BLUE, figure.get(org.jhotdraw.samples.svg.SVGAttributeKeys.STROKE_COLOR));
+  }
+
+  @Test
+  void currentColorIsResolved() throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(svg("<rect width='20' height='30' color='red' fill='currentcolor'/>"), drawing, true);
+    assertEquals(java.awt.Color.RED, drawing.getChildren().get(0)
+        .get(org.jhotdraw.samples.svg.SVGAttributeKeys.FILL_COLOR));
+  }
+
+  @Test
+  void pixelDimensionsArePreserved() throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(svg("<rect width='20px' height='30px'/>"), drawing, true);
+    assertEquals(20, drawing.getChildren().get(0).getBounds().getWidth(), 0.001);
+    assertEquals(30, drawing.getChildren().get(0).getBounds().getHeight(), 0.001);
+  }
+
+  @Test
+  void explicitFontSizeIsPreserved() throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(svg("<text x='10' y='30' font-size='18'>Hello</text>"), drawing, true);
+    assertEquals(18.0, drawing.getChildren().get(0)
+        .get(org.jhotdraw.samples.svg.SVGAttributeKeys.FONT_SIZE), 0.001);
+  }
 }
