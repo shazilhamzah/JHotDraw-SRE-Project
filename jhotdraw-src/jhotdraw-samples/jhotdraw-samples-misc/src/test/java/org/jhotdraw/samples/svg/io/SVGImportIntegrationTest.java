@@ -282,4 +282,30 @@ class SVGImportIntegrationTest {
     assertEquals(1, drawing.getChildren().size());
     assertEquals(40, drawing.getChildren().get(0).getBounds().getX(), 0.001);
   }
+
+  @Test
+  void indirectCircularUseDoesNotPreventOtherFigures() throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(svg("<defs><use id='a' href='#b'/><use id='b' href='#a'/></defs>"
+        + "<use href='#a'/><rect x='40' width='20' height='30'/>"), drawing, true);
+    assertEquals(1, drawing.getChildren().size());
+    assertEquals(40, drawing.getChildren().get(0).getBounds().getX(), 0.001);
+  }
+
+  @Test
+  void repeatedValidReferencesAreNotTreatedAsCycles() throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(svg("<defs><rect id='r' width='20' height='30'/></defs>"
+        + "<use href='#r'/><use href='#r' x='40'/>"), drawing, true);
+    assertEquals(2, drawing.getChildren().size());
+  }
+
+  @Test
+  void circularReferenceDoesNotBlockLaterValidReference() throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(svg("<defs><use id='loop' href='#loop'/><rect id='r' width='20' height='30'/></defs>"
+        + "<use href='#loop'/><use href='#r'/>"), drawing, true);
+    assertEquals(1, drawing.getChildren().size());
+    assertEquals(20, drawing.getChildren().get(0).getBounds().getWidth(), 0.001);
+  }
 }
