@@ -140,4 +140,65 @@ class SVGImportIntegrationTest {
     assertEquals(30, bounds.getWidth(), 0.001);
     assertEquals(40, bounds.getHeight(), 0.001);
   }
+
+  @org.junit.jupiter.params.ParameterizedTest
+  @org.junit.jupiter.params.provider.ValueSource(strings = {
+      "<defs><linearGradient id='p'><stop offset='0' stop-color='red'/><stop offset='1' stop-color='blue'/></linearGradient></defs><rect width='20' height='30' fill='url(#p)'/>",
+      "<defs><radialGradient id='p'><stop offset='0' stop-color='red'/><stop offset='1' stop-color='blue'/></radialGradient></defs><rect width='20' height='30' fill='url(#p)'/>",
+      "<defs><solidColor id='p' solid-color='red'/></defs><rect width='20' height='30' fill='url(#p)'/>",
+      "<style type='text/css'>rect { fill: red; }</style><rect width='20' height='30'/>",
+      "<g fill='red'><rect width='20' height='30' fill='inherit'/></g>",
+      "<rect width='20' height='30' color='red' fill='currentcolor'/>",
+      "<rect width='20' height='30' stroke='blue' stroke-width='2' stroke-dasharray='2,3' opacity='0.5'/>",
+      "<text x='10' y='30' font-size='12'>Hello</text>",
+      "<text x='10' y='30' xml:space='preserve'>A <tspan>B</tspan></text>",
+      "<textArea x='10' y='10' width='100' height='50'>Hello</textArea>",
+      "<a href='https://example.com'><rect width='20' height='30'/></a>",
+      "<switch><rect width='20' height='30'/></switch>",
+      "<svg x='10' y='10' width='100' height='100' viewBox='0 0 50 50'><rect width='20' height='30'/></svg>",
+      "<defs><rect id='r' width='20' height='30'/></defs><use xmlns:xlink='http://www.w3.org/1999/xlink' xlink:href='#r'/>",
+      "<image width='20' height='20' href='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jR1sAAAAASUVORK5CYII='/>"
+  })
+  void importsAdditionalSvgFeatures(String body) throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(svg(body), drawing, true);
+    assertEquals(1, drawing.getChildren().size());
+  }
+
+  @org.junit.jupiter.params.ParameterizedTest
+  @org.junit.jupiter.params.provider.ValueSource(strings = {
+      "20px", "20pt", "2pc", "20mm", "2cm", "1in", "20%", "2em"
+  })
+  void importsLengthUnits(String width) throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(svg("<rect width='" + width + "' height='30'/>"), drawing, true);
+    assertEquals(1, drawing.getChildren().size());
+    assertTrue(drawing.getChildren().get(0).getBounds().getWidth() > 0);
+  }
+
+  @Test
+  void clipboardHonorsReplace() throws Exception {
+    byte[] bytes = svg("<rect width='20' height='30'/>").getBytes(StandardCharsets.UTF_8);
+    java.awt.datatransfer.DataFlavor flavor =
+        new java.awt.datatransfer.DataFlavor("image/svg+xml", "Image SVG");
+    java.awt.datatransfer.Transferable transferable = new java.awt.datatransfer.Transferable() {
+      public java.awt.datatransfer.DataFlavor[] getTransferDataFlavors() {
+        return new java.awt.datatransfer.DataFlavor[] {flavor};
+      }
+      public boolean isDataFlavorSupported(java.awt.datatransfer.DataFlavor candidate) {
+        return flavor.equals(candidate);
+      }
+      public Object getTransferData(java.awt.datatransfer.DataFlavor candidate)
+          throws java.awt.datatransfer.UnsupportedFlavorException {
+        if (!isDataFlavorSupported(candidate)) {
+          throw new java.awt.datatransfer.UnsupportedFlavorException(candidate);
+        }
+        return new ByteArrayInputStream(bytes);
+      }
+    };
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(svg("<circle cx='20' cy='20' r='10'/>"), drawing, true);
+    new SVGInputFormat().read(transferable, drawing, true);
+    assertEquals(1, drawing.getChildren().size());
+  }
 }
