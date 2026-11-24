@@ -34,3 +34,7 @@ Regression tests are in SVGImportIntegrationTest.java: importsEmptySvgDocument (
 | PR | Pending review submission. |
 
 All named feature categories have tests, but exhaustive behavioral and edge-case coverage is not established. No coverage percentage is claimed. The earlier run 20 evidence above is historical.
+
+## Final verification — run 36
+
+[CI run 36](https://github.com/shazilhamzah/JHotDraw-SRE-Project/actions/runs/45400974024) passed both jobs at `0271120`. All 128 tests passed (93 integration, 6 importer unit, 4 parser unit, 25 existing), with zero failures, errors or skips. Stylesheet fill and percentage viewport width now have exact assertions, as do all six transform functions and a chained transform. These supersede the corresponding limitations in the earlier audit. Other detailed coverage limitations remain; no exhaustive coverage claim is made.
