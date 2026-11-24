@@ -959,6 +959,9 @@ public class SVGInputFormat implements InputFormat {
     readUseShapeAttributes(elem, a2);
     readFontAttributes(elem, a2);
     String href = readAttribute(elem, "xlink:href", null);
+    if (href == null) {
+      href = readAttribute(elem, "href", null);
+    }
     if (href != null && href.startsWith("#")) {
       Element refElem = identifiedElements.get(href.substring(1));
       if (refElem == null) {
