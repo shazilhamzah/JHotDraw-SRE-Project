@@ -294,68 +294,69 @@ public class SVGInputFormat implements InputFormat {
    * @return Returns the Figure, if the SVG element represents a Figure. Returns null in all other
    *     cases.
    */
+  @FunctionalInterface
+  private interface ElementReader {
+    Figure read(Element elem) throws IOException;
+  }
+
+  private final Map<String, ElementReader> elementReaders = createElementReaders();
+
+  private Map<String, ElementReader> createElementReaders() {
+    Map<String, ElementReader> readers = new HashMap<>();
+    readers.put("a", this::readAElement);
+    readers.put("circle", this::readCircleElement);
+    readers.put("ellipse", this::readEllipseElement);
+    readers.put("g", this::readGElement);
+    readers.put("image", this::readImageElement);
+    readers.put("line", this::readLineElement);
+    readers.put("path", this::readPathElement);
+    readers.put("polygon", this::readPolygonElement);
+    readers.put("polyline", this::readPolylineElement);
+    readers.put("rect", this::readRectElement);
+    readers.put("svg", this::readSVGElement);
+    readers.put("switch", this::readSwitchElement);
+    readers.put("text", this::readTextElement);
+    readers.put("textArea", this::readTextAreaElement);
+    readers.put("use", this::readUseElement);
+    readers.put("defs", elem -> {
+      readDefsElement(elem);
+      return null;
+    });
+    readers.put("linearGradient", elem -> {
+      readLinearGradientElement(elem);
+      return null;
+    });
+    readers.put("radialGradient", elem -> {
+      readRadialGradientElement(elem);
+      return null;
+    });
+    readers.put("solidColor", elem -> {
+      readSolidColorElement(elem);
+      return null;
+    });
+    // Title is not implemented; styles have already been flattened.
+    readers.put("title", elem -> null);
+    readers.put("style", elem -> null);
+    return Collections.unmodifiableMap(readers);
+  }
+
   private Figure readElement(Element elem) throws IOException {
-    Figure f = null;
-    if (isSvgElement(elem)) {
-      String name = elem.getLocalName();
-      if (name == null) {
-        LOG.warning("SVGInputFormat warning: skipping nameless element");
-      } else if ("a".equals(name)) {
-        f = readAElement(elem);
-      } else if ("circle".equals(name)) {
-        f = readCircleElement(elem);
-      } else if ("defs".equals(name)) {
-        readDefsElement(elem);
-        f = null;
-      } else if ("ellipse".equals(name)) {
-        f = readEllipseElement(elem);
-      } else if ("g".equals(name)) {
-        f = readGElement(elem);
-      } else if ("image".equals(name)) {
-        f = readImageElement(elem);
-      } else if ("line".equals(name)) {
-        f = readLineElement(elem);
-      } else if ("linearGradient".equals(name)) {
-        readLinearGradientElement(elem);
-        f = null;
-      } else if ("path".equals(name)) {
-        f = readPathElement(elem);
-      } else if ("polygon".equals(name)) {
-        f = readPolygonElement(elem);
-      } else if ("polyline".equals(name)) {
-        f = readPolylineElement(elem);
-      } else if ("radialGradient".equals(name)) {
-        readRadialGradientElement(elem);
-        f = null;
-      } else if ("rect".equals(name)) {
-        f = readRectElement(elem);
-      } else if ("solidColor".equals(name)) {
-        readSolidColorElement(elem);
-        f = null;
-      } else if ("svg".equals(name)) {
-        f = readSVGElement(elem);
-        // f = readGElement(elem);
-      } else if ("switch".equals(name)) {
-        f = readSwitchElement(elem);
-      } else if ("text".equals(name)) {
-        f = readTextElement(elem);
-      } else if ("textArea".equals(name)) {
-        f = readTextAreaElement(elem);
-      } else if ("title".equals(name)) {
-        // FIXME - Implement reading of title element
-        // f = readTitleElement(elem);
-      } else if ("use".equals(name)) {
-        f = readUseElement(elem);
-      } else if ("style".equals(name)) {
-        // Nothing to do, style elements have been already
-        // processed in method flattenStyles
-      } else {
-        LOG.info("SVGInputFormat not implemented for <" + name + ">");
-      }
+    if (!isSvgElement(elem)) {
+      return null;
     }
+    String name = elem.getLocalName();
+    if (name == null) {
+      LOG.warning("SVGInputFormat warning: skipping nameless element");
+      return null;
+    }
+    ElementReader reader = elementReaders.get(name);
+    if (reader == null) {
+      LOG.info("SVGInputFormat not implemented for <" + name + ">");
+      return null;
+    }
+    Figure f = reader.read(elem);
     if (f instanceof SVGFigure) {
       if (((SVGFigure) f).isEmpty()) {
-        // if (DEBUG) System.out.println("Empty figure "+f);
         return null;
       }
     } else if (f != null) {
