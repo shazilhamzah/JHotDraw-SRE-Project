@@ -31,10 +31,21 @@ Regression tests are in SVGImportIntegrationTest.java: importsEmptySvgDocument (
 | Extracted parser | Four focused tests. |
 | Metrics | Expanded CK/PMD results in docs/hassan-svg-report.md, run 29. |
 | Architecture, patterns, refactoring catalog | Documented in docs/hassan-svg-architecture.md and docs/hassan-svg-refactorings.md. |
-| PR | Pending review submission. |
+| PR | Submitted as PR #1, reviewed and merged. |
 
 All named feature categories have tests, but exhaustive behavioral and edge-case coverage is not established. No coverage percentage is claimed. The earlier run 20 evidence above is historical.
 
 ## Final verification — run 36
 
 [CI run 36](https://github.com/shazilhamzah/JHotDraw-SRE-Project/actions/runs/45400974024) passed both jobs at `0271120`. All 128 tests passed (93 integration, 6 importer unit, 4 parser unit, 25 existing), with zero failures, errors or skips. Stylesheet fill and percentage viewport width now have exact assertions, as do all six transform functions and a chained transform. These supersede the corresponding limitations in the earlier audit. Other detailed coverage limitations remain; no exhaustive coverage claim is made.
+
+## Review follow-up — PR #1
+
+Changes made during review before merging:
+
+- readAttribute now returns the default value when an `inherit` lookup reaches the document node. Before, `viewBox='inherit'` on the root `<svg>` threw a NullPointerException. The regression test is inheritOnRootAttributeFallsBackToDefault; it fails without the guard and passes with it.
+- SVGPathParserTest grows from 4 to 10 tests: it now checks exact coordinates for absolute and relative commands, implicit lineto after moveto, merging the end point on close path, cubic control points and the end point of an arc.
+- Cleanup with no behaviour change: the readElement Javadoc is back on readElement, fully qualified names are replaced with imports, stray blank lines are removed, and Spotless formatting is applied to the test sources.
+- Behaviour note: the importer now requires `<svg>` to be the document root. The old pre-order search for a nested `<svg>` was removed together with the bootstrap fix, because it cast every node to Element and could not run on any input.
+
+Local verification: `mvn -pl jhotdraw-samples/jhotdraw-samples-misc -am test` passed 135 tests (94 integration, 6 importer unit, 10 parser unit, 25 existing) with zero failures, errors or skips.
