@@ -44,10 +44,10 @@ This folder documents the re-engineering work for `jhotdraw-core`'s `DefaultDraw
 
 ## Document Index
 
-- [metrics.md](file:///C:/Users/MuhammadShazil/Documents/SRE%20Project/docs/shazil/metrics.md) — Measurement methodology, before/after tables, per-collaborator metrics, top complex methods, and links to raw data.
-- [code-smells-and-defects.md](file:///C:/Users/MuhammadShazil/Documents/SRE%20Project/docs/shazil/code-smells-and-defects.md) — Code smell taxonomy and all 12 documented defects with line evidence, root causes, and fixes.
-- [refactoring-log.md](file:///C:/Users/MuhammadShazil/Documents/SRE%20Project/docs/shazil/refactoring-log.md) — Step-by-step Martin Fowler catalog refactorings, Mermaid class diagram, and API compatibility notes.
-- [testing.md](file:///C:/Users/MuhammadShazil/Documents/SRE%20Project/docs/shazil/testing.md) — Characterization, unit, integration, and defect-regression test suites and verification results.
+- [metrics.md](../../docs/shazil/metrics.md) — Measurement methodology, before/after tables, per-collaborator metrics, top complex methods, and links to raw data.
+- [code-smells-and-defects.md](../../docs/shazil/code-smells-and-defects.md) — Code smell taxonomy and all 12 documented defects with line evidence, root causes, and fixes.
+- [refactoring-log.md](../../docs/shazil/refactoring-log.md) — Step-by-step Martin Fowler catalog refactorings, Mermaid class diagram, and API compatibility notes.
+- [testing.md](../../docs/shazil/testing.md) — Characterization, unit, integration, and defect-regression test suites and verification results.
 
 ## Reproduction Commands
 

@@ -4,7 +4,7 @@
 
 Two complementary static measurement tools were executed identically before any refactoring and after the final verified build:
 
-1. **AST CK & Complexity Analyzer** ([MetricsCalculator.java](file:///C:/Users/MuhammadShazil/Documents/SRE%20Project/docs/shazil/metrics/MetricsCalculator.java))
+1. **AST CK & Complexity Analyzer** ([MetricsCalculator.java](../../docs/shazil/metrics/MetricsCalculator.java))
    Built on JDK 17's `com.sun.source.util.JavacTask` and `TreeScanner` so results are deterministic, reproducible, and require no external binary setup:
    - **LOC / SLOC**: Total physical lines in the class declaration, and non-empty non-comment source lines.
    - **NOM / NOF**: Direct methods + constructors (`NOM`), and declared fields (`NOF`).
@@ -17,8 +17,8 @@ Two complementary static measurement tools were executed identically before any 
    Executed with `mvn -pl jhotdraw-core -am test-compile org.apache.maven.plugins:maven-pmd-plugin:3.26.0:pmd` against both the unmodified baseline and the final refactored code.
 
 Raw outputs are archived in:
-- Before: [before/ck-metrics.txt](file:///C:/Users/MuhammadShazil/Documents/SRE%20Project/docs/shazil/metrics/before/ck-metrics.txt), [before/ck-metrics.json](file:///C:/Users/MuhammadShazil/Documents/SRE%20Project/docs/shazil/metrics/before/ck-metrics.json), [before/pmd-summary.txt](file:///C:/Users/MuhammadShazil/Documents/SRE%20Project/docs/shazil/metrics/before/pmd-summary.txt), [before/pmd-report.xml](file:///C:/Users/MuhammadShazil/Documents/SRE%20Project/docs/shazil/metrics/before/pmd-report.xml)
-- After: [after/ck-metrics.txt](file:///C:/Users/MuhammadShazil/Documents/SRE%20Project/docs/shazil/metrics/after/ck-metrics.txt), [after/ck-metrics.json](file:///C:/Users/MuhammadShazil/Documents/SRE%20Project/docs/shazil/metrics/after/ck-metrics.json), [after/pmd-summary.txt](file:///C:/Users/MuhammadShazil/Documents/SRE%20Project/docs/shazil/metrics/after/pmd-summary.txt), [after/pmd-report.xml](file:///C:/Users/MuhammadShazil/Documents/SRE%20Project/docs/shazil/metrics/after/pmd-report.xml)
+- Before: [before/ck-metrics.txt](../../docs/shazil/metrics/before/ck-metrics.txt), [before/ck-metrics.json](../../docs/shazil/metrics/before/ck-metrics.json), [before/pmd-summary.txt](../../docs/shazil/metrics/before/pmd-summary.txt), [before/pmd-report.xml](../../docs/shazil/metrics/before/pmd-report.xml)
+- After: [after/ck-metrics.txt](../../docs/shazil/metrics/after/ck-metrics.txt), [after/ck-metrics.json](../../docs/shazil/metrics/after/ck-metrics.json), [after/pmd-summary.txt](../../docs/shazil/metrics/after/pmd-summary.txt), [after/pmd-report.xml](../../docs/shazil/metrics/after/pmd-report.xml)
 
 ---
 
