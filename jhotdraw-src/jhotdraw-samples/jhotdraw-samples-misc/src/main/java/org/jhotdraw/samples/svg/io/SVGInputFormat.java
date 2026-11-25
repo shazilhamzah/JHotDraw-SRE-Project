@@ -45,6 +45,7 @@ import org.jhotdraw.utils.util.LocaleUtil;
 import org.jhotdraw.xml.css.CSSParser;
 import org.jhotdraw.xml.css.StyleManager;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
@@ -291,12 +292,6 @@ public class SVGInputFormat implements InputFormat {
     }
   }
 
-  /**
-   * Reads an SVG element of any kind.
-   *
-   * @return Returns the Figure, if the SVG element represents a Figure. Returns null in all other
-   *     cases.
-   */
   @FunctionalInterface
   private interface ElementReader {
     Figure read(Element elem) throws IOException;
@@ -343,6 +338,12 @@ public class SVGInputFormat implements InputFormat {
     return Collections.unmodifiableMap(readers);
   }
 
+  /**
+   * Reads an SVG element of any kind.
+   *
+   * @return Returns the Figure, if the SVG element represents a Figure. Returns null in all other
+   *     cases.
+   */
   private Figure readElement(Element elem) throws IOException {
     if (!isSvgElement(elem)) {
       return null;
@@ -372,7 +373,7 @@ public class SVGInputFormat implements InputFormat {
 
   /** Reads an SVG "defs" element. */
   private void readDefsElement(Element elem) throws IOException {
-    for (org.w3c.dom.Node node = elem.getFirstChild(); node != null; node = node.getNextSibling()) {
+    for (Node node = elem.getFirstChild(); node != null; node = node.getNextSibling()) {
       if (node instanceof Element child) {
         readElement(child);
       }
@@ -388,9 +389,7 @@ public class SVGInputFormat implements InputFormat {
     NodeList list = elem.getChildNodes();
     for (int i = 0; i < list.getLength(); i++) {
       if (!(list.item(i) instanceof Element child)) {
-
         continue;
-
       }
       Figure childFigure = readElement(child);
       // skip invisible elements
@@ -421,9 +420,7 @@ public class SVGInputFormat implements InputFormat {
     NodeList list = elem.getChildNodes();
     for (int i = 0; i < list.getLength(); i++) {
       if (!(list.item(i) instanceof Element child)) {
-
         continue;
-
       }
       Figure childFigure = readElement(child);
       // skip invisible elements
@@ -498,9 +495,7 @@ public class SVGInputFormat implements InputFormat {
     NodeList list = elem.getChildNodes();
     for (int i = 0; i < list.getLength(); i++) {
       if (!(list.item(i) instanceof Element child)) {
-
         continue;
-
       }
       Figure childFigure = readElement(child);
       // skip invisible elements
@@ -898,9 +893,7 @@ public class SVGInputFormat implements InputFormat {
     NodeList list = elem.getChildNodes();
     for (int i = 0; i < list.getLength(); i++) {
       if (!(list.item(i) instanceof Element child)) {
-
         continue;
-
       }
       String[] requiredFeatures =
           toWSOrCommaSeparatedArray(readAttribute(child, "requiredFeatures", ""));
@@ -948,8 +941,8 @@ public class SVGInputFormat implements InputFormat {
     return null;
   }
 
-  private final java.util.Set<Element> activeUseReferences =
-      java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+  private final Set<Element> activeUseReferences =
+      Collections.newSetFromMap(new IdentityHashMap<>());
 
   /** Reads an SVG "use" element. */
   @SuppressWarnings("unchecked")
@@ -1037,18 +1030,15 @@ public class SVGInputFormat implements InputFormat {
     if (elem.hasAttributeNS(SVG_NAMESPACE, attributeName)) {
       value = elem.getAttributeNS(SVG_NAMESPACE, attributeName);
       if ("inherit".equals(value)) {
-        return readInheritColorAttribute(
-            parentElement(elem), attributeName, defaultValue);
+        return readInheritColorAttribute(parentElement(elem), attributeName, defaultValue);
       }
     } else if (elem.hasAttribute(attributeName)) {
       value = elem.getAttribute(attributeName);
       if ("inherit".equals(value)) {
-        return readInheritColorAttribute(
-            parentElement(elem), attributeName, defaultValue);
+        return readInheritColorAttribute(parentElement(elem), attributeName, defaultValue);
       }
     } else if (elem.getParentNode() instanceof Element parent && isSvgElement(parent)) {
-      value =
-          readInheritColorAttribute(parentElement(elem), attributeName, defaultValue);
+      value = readInheritColorAttribute(parentElement(elem), attributeName, defaultValue);
     } else {
       value = defaultValue;
     }
@@ -1074,25 +1064,21 @@ public class SVGInputFormat implements InputFormat {
     } else if (elem.hasAttribute(attributeName)) {
       value = elem.getAttribute(attributeName);
     } else if (elem.getParentNode() instanceof Element parent && isSvgElement(parent)) {
-      return readInheritFontSizeAttribute(
-          parentElement(elem), attributeName, defaultValue);
+      return readInheritFontSizeAttribute(parentElement(elem), attributeName, defaultValue);
     } else {
       value = defaultValue;
     }
     if ("inherit".equals(value)) {
-      return readInheritFontSizeAttribute(
-          parentElement(elem), attributeName, defaultValue);
+      return readInheritFontSizeAttribute(parentElement(elem), attributeName, defaultValue);
     } else if (SVG_ABSOLUTE_FONT_SIZES.containsKey(value)) {
       return SVG_ABSOLUTE_FONT_SIZES.get(value);
     } else if (SVG_RELATIVE_FONT_SIZES.containsKey(value)) {
       return SVG_RELATIVE_FONT_SIZES.get(value)
-          * readInheritFontSizeAttribute(
-              parentElement(elem), attributeName, defaultValue);
+          * readInheritFontSizeAttribute(parentElement(elem), attributeName, defaultValue);
     } else if (value.endsWith("%")) {
       double factor = Double.valueOf(value.substring(0, value.length() - 1));
       return factor
-          * readInheritFontSizeAttribute(
-              parentElement(elem), attributeName, defaultValue);
+          * readInheritFontSizeAttribute(parentElement(elem), attributeName, defaultValue);
     } else {
       // return toScaledNumber(elem, value);
       return toNumber(elem, value);
@@ -1101,6 +1087,9 @@ public class SVGInputFormat implements InputFormat {
 
   /** Reads an attribute that is not inherited, unless its value is "inherit". */
   private String readAttribute(Element elem, String attributeName, String defaultValue) {
+    if (elem == null) {
+      return defaultValue;
+    }
     if (elem.hasAttributeNS(SVG_NAMESPACE, attributeName)) {
       String value = elem.getAttributeNS(SVG_NAMESPACE, attributeName);
       if ("inherit".equals(value)) {
@@ -1269,9 +1258,7 @@ public class SVGInputFormat implements InputFormat {
     NodeList list = elem.getChildNodes();
     for (int i = 0; i < list.getLength(); i++) {
       if (!(list.item(i) instanceof Element child)) {
-
         continue;
-
       }
       identifyElements(child);
     }
@@ -1420,8 +1407,8 @@ public class SVGInputFormat implements InputFormat {
     readStrokeStyleAttributes(elem, a);
   }
 
-  private void readFillAttributes(Element elem, HashMap<AttributeKey<?>, Object> a, String defaultFill)
-      throws IOException {
+  private void readFillAttributes(
+      Element elem, HashMap<AttributeKey<?>, Object> a, String defaultFill) throws IOException {
     Object objectValue;
     String value;
     // 'fill'
@@ -1465,8 +1452,8 @@ public class SVGInputFormat implements InputFormat {
     WINDING_RULE.put(a, SVG_FILL_RULES.get(value));
   }
 
-  private void readStrokePaint(Element elem, HashMap<AttributeKey<?>, Object> a, String defaultStroke)
-      throws IOException {
+  private void readStrokePaint(
+      Element elem, HashMap<AttributeKey<?>, Object> a, String defaultStroke) throws IOException {
     Object objectValue;
     // 'stroke'
     // Value:   <paint> | inherit (See Specifying paint)
