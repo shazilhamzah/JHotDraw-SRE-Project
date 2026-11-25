@@ -2,9 +2,9 @@
 
 Class                             LOC   SLOC   NOM   NOF   WMC  MaxCC   AvgCC   CBO   LCOM1    LCOM*
 ------------------------------------------------------------------------------------------------------
-DefaultDrawingView                876    676    86    25   137      5    1.59    45    2722   0.9349
+DefaultDrawingView                876    675    86    25   138      5    1.60    45    2722   0.9349
 EventHandler                       81     71    10     0    20      5    2.00    11      45   0.0000
-DrawingViewBuffer                 270    242    17     7    56     13    3.29    12      28   0.7467
+DrawingViewBuffer                 265    233    17     7    55     13    3.24    12      28   0.7467
 DrawingViewViewport               197    169    17     4    40      6    2.35     8       0   0.6406
 DrawingViewHandleManager          222    202    19     5    46      6    2.42    15       2   0.7125
 DrawingViewSelectionManager       103     89    11     3    19      4    1.73    13       0   0.6000
@@ -72,7 +72,6 @@ Class DefaultDrawingView (DefaultDrawingView.java:57-932)
     CC= 1 LOC=  3 L 703-705  getDrawingArea()
     CC= 1 LOC=  3 L 770-772  fireViewTransformChanged()
     CC= 1 LOC=  3 L 886-888  isDrawingDoubleBuffered()
-    CC= 2 LOC= 20 L 296-315  paintComponent(Graphics)
     CC= 2 LOC= 15 L 895-909  getBackgroundPaint(int, int)
     CC= 2 LOC=  9 L 391-399  drawConstrainer(Graphics2D)
     CC= 2 LOC=  9 L 515-523  removeFromSelection(Figure)
@@ -89,6 +88,7 @@ Class DefaultDrawingView (DefaultDrawingView.java:57-932)
     CC= 2 LOC=  5 L 648-652  findFiguresWithin(Rectangle)
     CC= 2 LOC=  4 L 693-696  getConstrainer()
     CC= 2 LOC=  3 L 288-290  getEmptyDrawingMessage()
+    CC= 3 LOC= 20 L 296-315  paintComponent(Graphics)
     CC= 3 LOC= 18 L 121-138  drawInfiniteCanvasBackground(Graphics2D)
     CC= 3 LOC= 18 L 352-369  applyRenderingHints(Graphics2D, boolean)
     CC= 3 LOC= 13 L 774-786  setHandleDetailLevel(int)
@@ -117,7 +117,7 @@ Class EventHandler (DefaultDrawingView.java:155-235)
     CC= 3 LOC= 10 L 165-174  figureAdded(DrawingEvent)
     CC= 5 LOC= 15 L 217-231  drawingAttributeChanged(DrawingEvent)
 
-Class DrawingViewBuffer (DrawingViewBuffer.java:20-289)
+Class DrawingViewBuffer (DrawingViewBuffer.java:20-284)
   Coupled types (12): AlphaComposite, BufferedImage, Color, Consumer, Graphics2D, GraphicsConfiguration, Image, Locale, Point, Rectangle, Transparency, VolatileImage
   Methods sorted by CC desc:
     CC= 1 LOC=  4 L  52-55   flush()
@@ -127,16 +127,16 @@ Class DrawingViewBuffer (DrawingViewBuffer.java:20-289)
     CC= 1 LOC=  3 L  85-87   translateBufferedArea(int, int)
     CC= 1 LOC=  3 L  89-91   getBufferedArea()
     CC= 1 LOC=  3 L  93-95   getDirtyArea()
-    CC= 2 LOC= 12 L  97-108  drawBuffered(Graphics2D, Rectangle, GraphicsConfiguration, Consumer<Graphics2D>, Consumer<Graphics2D>)
+    CC= 1 LOC=  3 L 101-103  prefersNonvolatileBuffer()
     CC= 2 LOC=  6 L  45-50   setDoubleBuffered(boolean)
     CC= 2 LOC=  6 L  57-62   flushVolatile()
     CC= 2 LOC=  6 L  64-69   flushNonvolatile()
     CC= 2 LOC=  5 L  71-75   markDirty(Rectangle)
-    CC= 3 LOC= 27 L 262-288  renderDirtyRegion(Graphics2D, int, int, Point, Consumer<Graphics2D>, Consumer<Graphics2D>)
+    CC= 3 LOC= 27 L 257-283  renderDirtyRegion(Graphics2D, int, int, Point, Consumer<Graphics2D>, Consumer<Graphics2D>)
     CC= 3 LOC=  9 L  31-39   detectWindowsOs()
-    CC= 8 LOC= 45 L 166-210  drawNonvolatile(Graphics2D, Rectangle, GraphicsConfiguration, Consumer<Graphics2D>, Consumer<Graphics2D>)
-    CC=12 LOC= 55 L 110-164  drawVolatile(Graphics2D, Rectangle, GraphicsConfiguration, Consumer<Graphics2D>, Consumer<Graphics2D>)
-    CC=13 LOC= 49 L 212-260  prepareBufferedArea(Rectangle, boolean)
+    CC= 8 LOC= 45 L 161-205  drawNonvolatile(Graphics2D, Rectangle, GraphicsConfiguration, Consumer<Graphics2D>, Consumer<Graphics2D>)
+    CC=12 LOC= 55 L 105-159  drawVolatile(Graphics2D, Rectangle, GraphicsConfiguration, Consumer<Graphics2D>, Consumer<Graphics2D>)
+    CC=13 LOC= 49 L 207-255  prepareBufferedArea(Rectangle, boolean)
 
 Class DrawingViewViewport (DrawingViewViewport.java:18-214)
   Coupled types (8): AffineTransform, Dimension, Drawing, Insets, Point, Point2D, Rectangle, Rectangle2D

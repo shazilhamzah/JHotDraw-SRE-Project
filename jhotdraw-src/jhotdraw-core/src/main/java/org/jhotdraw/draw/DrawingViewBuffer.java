@@ -94,17 +94,12 @@ class DrawingViewBuffer {
     return new Rectangle(dirtyArea);
   }
 
-  void drawBuffered(
-      Graphics2D g,
-      Rectangle visibleRect,
-      GraphicsConfiguration gc,
-      Consumer<Graphics2D> hintsApplier,
-      Consumer<Graphics2D> drawingRenderer) {
-    if (IS_WINDOWS) {
-      drawNonvolatile(g, visibleRect, gc, hintsApplier, drawingRenderer);
-    } else {
-      drawVolatile(g, visibleRect, gc, hintsApplier, drawingRenderer);
-    }
+  /**
+   * Returns true if the nonvolatile ({@link BufferedImage}) buffer should be used instead of the
+   * volatile buffer. Nonvolatile buffering is preferred on Windows.
+   */
+  boolean prefersNonvolatileBuffer() {
+    return IS_WINDOWS;
   }
 
   void drawVolatile(

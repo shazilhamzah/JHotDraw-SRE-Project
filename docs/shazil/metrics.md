@@ -28,12 +28,12 @@ Raw outputs are archived in:
 |---|---:|---:|---:|---:|
 | Total File Lines | 1,550 | 932 | -618 | -39.9% |
 | Class `LOC` | 1,476 | 876 | -600 | -40.7% |
-| Class `SLOC` | 1,185 | 676 | -509 | -43.0% |
+| Class `SLOC` | 1,185 | 675 | -510 | -43.0% |
 | `NOM` (Methods + Ctors) | 81 | 86 | +5 | +6.2% |
 | `NOF` (Fields) | 30 | 25 | -5 | -16.7% |
-| `WMC` (Weighted Methods/Class) | 237 | 137 | -100 | -42.2% |
+| `WMC` (Weighted Methods/Class) | 237 | 138 | -99 | -41.8% |
 | `MaxCC` | 22 | 5 | -17 | -77.3% |
-| `AvgCC` | 2.93 | 1.59 | -1.34 | -45.7% |
+| `AvgCC` | 2.93 | 1.60 | -1.33 | -45.4% |
 | `CBO` | 52 | 45 | -7 | -13.5% |
 | `LCOM1` | 2,814 | 2,722 | -92 | -3.3% |
 | `LCOM*` | 0.9611 | 0.9349 | -0.0262 | -2.7% |
@@ -41,8 +41,8 @@ Raw outputs are archived in:
 
 ### Interpretation of `DefaultDrawingView` Metrics
 
-- **`MaxCC` dropped 77.3% (22 → 5) and `WMC` dropped 42.2% (237 → 137):** Every high-complexity algorithm (`drawDrawingVolatileBuffered` CC=22, `drawDrawingNonvolatileBuffered` CC=18, `validateViewTranslation` CC=11, `validateHandles` CC=10, `addToSelection` CC=9, `invalidateHandles` CC=7, `delete` CC=6) was extracted into focused collaborators or decomposed into small single-purpose helpers. No method left in `DefaultDrawingView` or `EventHandler` has `CC > 5`.
-- **`LOC` dropped 40.7% and `SLOC` dropped 43.0%:** Nearly 510 source lines of tangled Swing buffering, coordinate geometry, handle management, selection tracking, and undoable command logic were removed from `DefaultDrawingView`.
+- **`MaxCC` dropped 77.3% (22 → 5) and `WMC` dropped 41.8% (237 → 138):** Every high-complexity algorithm (`drawDrawingVolatileBuffered` CC=22, `drawDrawingNonvolatileBuffered` CC=18, `validateViewTranslation` CC=11, `validateHandles` CC=10, `addToSelection` CC=9, `invalidateHandles` CC=7, `delete` CC=6) was extracted into focused collaborators or decomposed into small single-purpose helpers. No method left in `DefaultDrawingView` or `EventHandler` has `CC > 5`.
+- **`LOC` dropped 40.7% and `SLOC` dropped 43.0%:** About 510 source lines of tangled Swing buffering, coordinate geometry, handle management, selection tracking, and undoable command logic were removed from `DefaultDrawingView`.
 - **Why `NOM` increased slightly (81 → 86) and `LCOM` decreased modestly:** `DefaultDrawingView` implements two large framework interfaces (`DrawingView` and `EditableComponent`) and exposes `protected` Swing/JHotDraw hooks (`drawBackground`, `drawCanvas`, `drawDrawing`, `drawHandles`, `drawTool`, `getDrawingArea`, etc.). Preserving full binary and source backward compatibility kept all facade methods on `DefaultDrawingView` while decomposing rendering helpers (`drawInfiniteCanvasBackground`, `fillFullViewWithBackgroundTile`, `createTranslucentCanvasColor`, `applyRenderingHints`, `drawWithViewTransform`). The extracted collaborators themselves exhibit dramatically higher cohesion (`LCOM1` = 0 on `DrawingViewViewport`, `DrawingViewSelectionManager`, and `DrawingViewEditCommands`; `LCOM1` = 2 on `DrawingViewHandleManager`).
 
 ---
@@ -51,9 +51,9 @@ Raw outputs are archived in:
 
 | Class | File | LOC | SLOC | NOM | NOF | WMC | MaxCC | AvgCC | CBO | LCOM1 | LCOM* | PMD |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| `DefaultDrawingView` | `DefaultDrawingView.java` | 876 | 676 | 86 | 25 | 137 | 5 | 1.59 | 45 | 2,722 | 0.9349 | 0 |
+| `DefaultDrawingView` | `DefaultDrawingView.java` | 876 | 675 | 86 | 25 | 138 | 5 | 1.60 | 45 | 2,722 | 0.9349 | 0 |
 | `EventHandler` | `DefaultDrawingView.java` (inner) | 81 | 71 | 10 | 0 | 20 | 5 | 2.00 | 11 | 45 | 0.0000 | 0 |
-| `DrawingViewBuffer` | `DrawingViewBuffer.java` | 270 | 242 | 17 | 7 | 56 | 13 | 3.29 | 12 | 28 | 0.7467 | 0 |
+| `DrawingViewBuffer` | `DrawingViewBuffer.java` | 265 | 233 | 17 | 7 | 55 | 13 | 3.24 | 12 | 28 | 0.7467 | 0 |
 | `DrawingViewViewport` | `DrawingViewViewport.java` | 197 | 169 | 17 | 4 | 40 | 6 | 2.35 | 8 | 0 | 0.6406 | 0 |
 | `DrawingViewHandleManager` | `DrawingViewHandleManager.java` | 222 | 202 | 19 | 5 | 46 | 6 | 2.42 | 15 | 2 | 0.7125 | 0 |
 | `DrawingViewSelectionManager` | `DrawingViewSelectionManager.java` | 103 | 89 | 11 | 3 | 19 | 4 | 1.73 | 13 | 0 | 0.6000 | 0 |

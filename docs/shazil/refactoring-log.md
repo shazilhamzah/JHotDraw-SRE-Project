@@ -39,7 +39,7 @@ classDiagram
         -BufferedImage nonvolatileBuffer
         -Rectangle bufferedArea
         -Rectangle dirtyArea
-        +drawBuffered(...)
+        +prefersNonvolatileBuffer()
         +drawVolatile(...)
         +drawNonvolatile(...)
         +flush()
@@ -116,7 +116,7 @@ classDiagram
   - *Extract Class*: Moved `scaleFactor`, `translation`, `cachedDrawingArea`, `cachedPreferredSize`, coordinate conversions, canvas view bounds, preferred size, and translation logic into [DrawingViewViewport.java](file:///C:/Users/MuhammadShazil/Documents/SRE%20Project/jhotdraw-src/jhotdraw-core/src/main/java/org/jhotdraw/draw/DrawingViewViewport.java).
   - *Extract Method & Decompose Conditional*: Split `updateTranslation` into `computeInitialTranslation` and `clampTranslationToDrawing`; split `getPreferredSize` into `computeInfiniteCanvasPreferredSize` and `computeFixedCanvasPreferredSize`.
   - *Simplify Arithmetic Expression*: Replaced `Math.max(0, r.x) + r.width + Math.min(0, r.x)` with `r.x + r.width`.
-- **Defects Addressed:** Fixed Defect #2 (swapped `insets.top` / `insets.left` and stale fixed-canvas offset), Defect #11-cache (`invalidateDimension()` in `setDrawing()`), and Defect #12 (`setScaleFactor` positive-finite validation and synchronous dimension invalidation).
+- **Defects Addressed:** Fixed Defect #2 (stale fixed-canvas centering offset after zooming in; also corrected the masked swapped `insets.top` / `insets.left` assignment), Defect #11-cache (`invalidateDimension()` in `setDrawing()`), and Defect #12 (`setScaleFactor` positive-finite validation and synchronous dimension invalidation).
 - **Tests Added:** [DrawingViewViewportTest.java](file:///C:/Users/MuhammadShazil/Documents/SRE%20Project/jhotdraw-src/jhotdraw-core/src/test/java/org/jhotdraw/draw/DrawingViewViewportTest.java) (4 tests).
 - **Verification:** `mvn -pl jhotdraw-core -am test` → **30/30 passed**.
 
@@ -153,12 +153,19 @@ classDiagram
   - *Replace Magic Number with Symbolic Constant*: Extracted `DEFAULT_BACKGROUND_COLOR`, `CHECKER_DARK_COLOR`, `CHECKER_TILE_SIZE`, `CHECKER_CELL_SIZE`, `REPAINT_MARGIN`, `SET_DRAWING_REPAINT_DELAY_MS`, `RGB_COLOR_MASK`, `MAX_ALPHA`, and used `DrawingView.SCALE_FACTOR_PROPERTY`.
   - *Remove Dead Code*: Removed obsolete NetBeans `editor-fold` / `Variables declaration` boilerplate, obsolete `FIXME` comments, and commented-out code in `EventHandler`.
   - *Remove Redundant Field*: Removed duplicate `cachedPreferredSize` from `DefaultDrawingView` after `DrawingViewViewport` took over preferred-size caching.
-- **Defects Addressed:** Fixed Defect #1 (`0xffffff` mask + clamped `Math.round`), Defect #3 (`addNotify`/`removeNotify` `"editor"` property change), Defect #6 (null-safe `CANVAS_HEIGHT.equals(a)` and `repaintDrawingArea(e.getInvalidatedArea())`), and Defect #11 (`repaintTimer` cancellation and `paintEnabled = true` before `repaint()`).
+- **Defects Addressed:** Fixed Defect #1 (`0xffffff` mask + clamped `Math.round`), Defect #3 (`addNotify`/`removeNotify` `"editor"` property change), Defect #6 (null-safe `CANVAS_HEIGHT.equals(a)` and `repaintDrawingArea(e.getInvalidatedArea())`), and Defect #11 (`repaintTimer` cancellation; `paintEnabled = true` is now also set before `repaint()` for readability).
 - **Tests Added:** [DefaultDrawingViewDefectFixesTest.java](file:///C:/Users/MuhammadShazil/Documents/SRE%20Project/jhotdraw-src/jhotdraw-core/src/test/java/org/jhotdraw/draw/DefaultDrawingViewDefectFixesTest.java) (12 tests, one per defect).
 - **Verification:** Full multi-module `mvn test` across all 13 reactor modules → **BUILD SUCCESS**, **49/49 tests passed in `jhotdraw-core`**, **0 Checkstyle violations**, **0 PMD violations** on `DefaultDrawingView` and all 5 extracted classes.
+
+### Step 3.7 — Post-Review Corrections
+- **Restore protected hook dispatch:** Step 3.1 had made `paintComponent` call `DrawingViewBuffer.drawBuffered(...)` directly, so a subclass overriding the `protected` hooks `drawDrawingVolatileBuffered` / `drawDrawingNonvolatileBuffered` was no longer called. `DrawingViewBuffer.drawBuffered` was replaced by `prefersNonvolatileBuffer()`, and `paintComponent` again dispatches through the two `protected` hooks exactly like the original class.
+- **Tests Added:** `DefaultDrawingViewUnitTest.doubleBufferedPaintComponentDispatchesThroughOverridableBufferingHooks` (characterization test: passes on the original class, fails on the Step 3.6 code, passes after this step).
+- **Defect #2 regression test corrected:** The previous `defect02InfiniteCanvasUsesAsymmetricInsetsCorrectly` test also passed on the original class (the swapped infinite-canvas insets are masked by the later clamping step). It was replaced by `defect02FixedCanvasResetsStaleCenteringOffsetWhenZoomedLargerThanView`, which fails on the original class (origin `(47, 32)` instead of `(30, 10)`) and passes after the fix. All 12 defect regression tests now fail on the original class and pass on the refactored class.
+- **Defect #11 description corrected:** Reordering `paintEnabled = true` before `repaint()` is documented as a readability change, not a defect fix, because `repaint()` only schedules a later paint on the same Event Dispatch Thread.
+- **Verification:** Full multi-module `mvn test` → **BUILD SUCCESS**, **50/50 tests passed in `jhotdraw-core`**, **0 Checkstyle violations**; CK metrics and PMD re-run (`DefaultDrawingView` `WMC` 137 → 138 due to the restored hook dispatch branch; **0 PMD violations** on `DefaultDrawingView` and all 5 extracted classes).
 
 ---
 
 ## API Backward-Compatibility Guarantees
 
-All existing `public` and `protected` members of `DefaultDrawingView` (`DrawingView`, `EditableComponent`, `DRAWING_DOUBLE_BUFFERED_PROPERTY`, `backgroundTile`, `EventHandler`, `createEventHandler()`, `drawBackground`, `drawCanvas`, `drawConstrainer`, `drawDrawing`, `drawHandles`, `drawTool`, `drawDrawingVolatileBuffered`, `drawDrawingNonvolatileBuffered`, `getCanvasViewBounds`, `getBackgroundPaint`, `getDrawingArea`, `invalidateDimension`, `fireSelectionChanged`, `fireViewTransformChanged`, `setViewRenderingHints`, `repaintDrawingArea`, `setEmptyDrawingMessage`, `getEmptyDrawingMessage`, `setDrawingDoubleBuffered`, `isDrawingDoubleBuffered`) retain their exact signatures and visibility so all downstream modules (`jhotdraw-samples-misc`, `jhotdraw-samples-mini`, etc.) compile and work without changes.
+All existing `public` and `protected` members of `DefaultDrawingView` (`DrawingView`, `EditableComponent`, `DRAWING_DOUBLE_BUFFERED_PROPERTY`, `backgroundTile`, `EventHandler`, `createEventHandler()`, `drawBackground`, `drawCanvas`, `drawConstrainer`, `drawDrawing`, `drawHandles`, `drawTool`, `drawDrawingVolatileBuffered`, `drawDrawingNonvolatileBuffered`, `getCanvasViewBounds`, `getBackgroundPaint`, `getDrawingArea`, `invalidateDimension`, `fireSelectionChanged`, `fireViewTransformChanged`, `setViewRenderingHints`, `repaintDrawingArea`, `setEmptyDrawingMessage`, `getEmptyDrawingMessage`, `setDrawingDoubleBuffered`, `isDrawingDoubleBuffered`) retain their exact signatures and visibility, and `paintComponent` still dispatches through the overridable `drawDrawingVolatileBuffered` / `drawDrawingNonvolatileBuffered` hooks, so all downstream modules (`jhotdraw-samples-misc`, `jhotdraw-samples-mini`, etc.) compile and work without changes.

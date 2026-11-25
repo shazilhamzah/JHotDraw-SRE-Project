@@ -55,7 +55,7 @@ Target file: `jhotdraw-src/jhotdraw-core/src/main/java/org/jhotdraw/draw/Default
 - **Fix Applied:** Replaced with `createTranslucentCanvasColor`: masks with `RGB_COLOR_MASK = 0xffffff` and computes `alpha = Math.max(0, Math.min(255, (int) Math.round(canvasOpacity * 255)))`.
 - **Verification:** `DefaultDrawingViewDefectFixesTest.defect01TranslucentRedBackgroundPreservesFullRedChannel`.
 
-### Defect #2: Swapped `insets.top` / `insets.left` and Leaked Fixed-Canvas Translation
+### Defect #2: Stale Fixed-Canvas Centering Offset After Zooming In (plus Swapped Infinite-Canvas Insets)
 - **Location:** `DefaultDrawingView.java` → `validateViewTranslation()` (`L1204-1221`)
 - **Original Code:**
   ```java
@@ -72,9 +72,10 @@ Target file: `jhotdraw-src/jhotdraw-core/src/main/java/org/jhotdraw/draw/Default
     }
   }
   ```
-- **Root Cause & Impact:** For an infinite canvas, `insets.top` was assigned to `translation.x` and `insets.left` to `translation.y` (wrong axes AND wrong sign: positive `translation.x` shifts drawing left under the border instead of right by `insets.left`, because `drawingToView` subtracts `translation.x`). For a fixed canvas, when `cw >= width` (e.g., after zooming in), `translation.x` was never reset from the previous centering offset.
-- **Fix Applied:** In `DrawingViewViewport.computeInitialTranslation`, infinite canvas uses `translation.x = -insets.left; translation.y = -insets.top;`, and fixed canvas explicitly resets `translation.x = -insets.left` / `translation.y = -insets.top` whenever `scaledCanvasWidth >= viewWidth` or `scaledCanvasHeight >= viewHeight`.
-- **Verification:** `DefaultDrawingViewDefectFixesTest.defect02InfiniteCanvasUsesAsymmetricInsetsCorrectly` and `DrawingViewViewportTest.fixedCanvasCentersWhenSmallerAndResetsWhenLarger`.
+- **Root Cause & Impact (observable defect):** For a fixed-size canvas, `translation.x` / `translation.y` are only assigned when the scaled canvas is *smaller* than the view (`cw < width`, `ch < height`). When the canvas becomes larger than the view (e.g., after zooming in), neither branch runs and the previous centering offset is silently kept. Reproduction: border insets `(top=10, left=30, bottom=5, right=15)`, view `300x200`, canvas `100x100`; after `setScaleFactor(5.0)` the drawing origin is still drawn at view point `(47, 32)` instead of `(30, 10)`, so the oversized canvas is shifted right/down and part of it becomes unreachable.
+- **Related code smell (not observable):** For an infinite canvas, `insets.top` was assigned to `translation.x` and `insets.left` to `translation.y` (wrong axes and wrong sign, since `drawingToView` subtracts `translation`). This is masked in practice: the subsequent clamping step (`Math.min(0, r.x) - translation.x < insets.left`) always overrides the initial value, so the original code still placed the origin at `(insets.left, insets.top)`. It was corrected as a readability fix only.
+- **Fix Applied:** In `DrawingViewViewport.computeInitialTranslation`, the fixed-canvas branch explicitly resets `translation.x = -insets.left` / `translation.y = -insets.top` whenever `scaledCanvasWidth >= viewWidth` or `scaledCanvasHeight >= viewHeight`; the infinite-canvas branch uses `translation.x = -insets.left; translation.y = -insets.top;`.
+- **Verification:** `DefaultDrawingViewDefectFixesTest.defect02FixedCanvasResetsStaleCenteringOffsetWhenZoomedLargerThanView` (fails on the original class, passes after the fix) and `DrawingViewViewportTest.fixedCanvasCentersWhenSmallerAndResetsWhenLarger`.
 
 ### Defect #3: `addNotify(DrawingEditor)` Fires Wrong `oldValue` and `removeNotify(DrawingEditor)` Omits Property Change & Handle Invalidation
 - **Location:** `DefaultDrawingView.java` → `removeNotify(DrawingEditor)` (`L1420-1423`) and `addNotify(DrawingEditor)` (`L1426-1432`)
@@ -146,13 +147,12 @@ Target file: `jhotdraw-src/jhotdraw-core/src/main/java/org/jhotdraw/draw/Default
 - **Fix Applied:** `DrawingViewBuffer` returns early if `visibleRect.width <= 0 || visibleRect.height <= 0` and falls back to direct rendering when `gc == null`.
 - **Verification:** `DefaultDrawingViewDefectFixesTest.defect10HeadlessDoubleBufferedPaintDoesNotThrowNullPointerException` and `DrawingViewBufferTest`.
 
-### Defect #11: Stale `cachedDrawingArea` & Race Condition in `setDrawing` Timer
+### Defect #11: Stale `cachedDrawingArea` & Overlapping `setDrawing` Repaint Timers
 - **Location:** `DefaultDrawingView.java` → `setDrawing(Drawing)` (`L745-770`)
 - **Root Cause & Impact:**
   1. `setDrawing()` did not call `invalidateDimension()` before `validateViewTranslation()`, causing `validateViewTranslation()` and `getPreferredSize()` to use the previous drawing's cached bounds/size.
   2. Each `setDrawing()` call created an unreferenced `javax.swing.Timer(10, ...)`, so rapid `setDrawing` calls left overlapping timers firing out of order.
-  3. Inside `actionPerformed`, `repaint()` ran *before* `paintEnabled = true`, so a synchronous/coalesced paint still saw `paintEnabled == false`.
-- **Fix Applied:** `setDrawing()` calls `invalidateDimension()` before `validateViewTranslation()`, stops any prior `repaintTimer` before starting the new one, and sets `paintEnabled = true` *before* calling `repaint()`.
+- **Fix Applied:** `setDrawing()` calls `invalidateDimension()` before `validateViewTranslation()` and stops any prior `repaintTimer` before starting the new one. (The timer callback now also sets `paintEnabled = true` before calling `repaint()`; this is only a readability reordering, not a defect fix, because `repaint()` merely schedules a later paint on the same Event Dispatch Thread.)
 - **Verification:** `DefaultDrawingViewDefectFixesTest.defect11SetDrawingInvalidatesCachedDimensionImmediatelyAndCancelsOldTimer`.
 
 ### Defect #12: `setScaleFactor` Accepts Invalid Values and Fails to Invalidate Cached Dimensions

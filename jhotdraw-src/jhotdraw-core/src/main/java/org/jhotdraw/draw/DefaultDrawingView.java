@@ -301,12 +301,12 @@ public class DefaultDrawingView extends JComponent implements DrawingView, Edita
     drawCanvas(g);
     drawConstrainer(g);
     if (isDrawingDoubleBuffered()) {
-      drawingBuffer.drawBuffered(
-          g,
-          getVisibleRect(),
-          getGraphicsConfiguration(),
-          this::setViewRenderingHints,
-          this::drawDrawing);
+      // Dispatch through the protected hooks so that subclasses overriding them are still called.
+      if (drawingBuffer.prefersNonvolatileBuffer()) {
+        drawDrawingNonvolatileBuffered(g);
+      } else {
+        drawDrawingVolatileBuffered(g);
+      }
     } else {
       drawDrawing(g);
     }

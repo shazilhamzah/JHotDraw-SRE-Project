@@ -58,12 +58,20 @@ public class DefaultDrawingViewDefectFixesTest {
   }
 
   @Test
-  void defect02InfiniteCanvasUsesAsymmetricInsetsCorrectly() {
+  void defect02FixedCanvasResetsStaleCenteringOffsetWhenZoomedLargerThanView() {
     DefaultDrawingView view = new DefaultDrawingView();
     view.setBorder(BorderFactory.createEmptyBorder(10, 30, 5, 15));
     DefaultDrawing drawing = new DefaultDrawing();
+    drawing.attr().set(CANVAS_WIDTH, 100.0);
+    drawing.attr().set(CANVAS_HEIGHT, 100.0);
     view.setDrawing(drawing);
     view.setBounds(0, 0, 300, 200);
+    // The canvas is smaller than the view, so it is centered (non-zero centering offset).
+    assertThat(view.drawingToView(new Point2D.Double(0, 0))).isNotEqualTo(new Point(30, 10));
+
+    // Zoomed in, the 500x500 canvas no longer fits: its origin must snap back to the insets
+    // instead of keeping the stale centering offset from the previous scale factor.
+    view.setScaleFactor(5.0);
 
     assertThat(view.drawingToView(new Point2D.Double(0, 0))).isEqualTo(new Point(30, 10));
   }

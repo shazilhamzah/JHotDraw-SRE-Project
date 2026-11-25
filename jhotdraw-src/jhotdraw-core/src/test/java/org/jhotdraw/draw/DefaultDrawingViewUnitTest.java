@@ -608,4 +608,42 @@ public class DefaultDrawingViewUnitTest {
     undoManager.redo();
     assertThat(drawing.getChildren()).containsExactly(locked, dup);
   }
+
+  @Test
+  void doubleBufferedPaintComponentDispatchesThroughOverridableBufferingHooks() {
+    List<String> calls = new ArrayList<>();
+    DefaultDrawingView hooked = new DefaultDrawingView() {
+      @Override
+      protected void drawDrawingVolatileBuffered(Graphics2D g) {
+        calls.add("volatile");
+      }
+
+      @Override
+      protected void drawDrawingNonvolatileBuffered(Graphics2D g) {
+        calls.add("nonvolatile");
+      }
+
+      @Override
+      protected void drawDrawing(Graphics2D g) {
+        calls.add("direct");
+      }
+    };
+    hooked.setDrawing(new DefaultDrawing());
+    hooked.setBounds(0, 0, 60, 40);
+    BufferedImage img = new BufferedImage(60, 40, BufferedImage.TYPE_INT_ARGB);
+
+    Graphics2D g = img.createGraphics();
+    g.setClip(0, 0, 60, 40);
+    hooked.paintComponent(g);
+    g.dispose();
+    assertThat(calls).hasSize(1).first().isIn("volatile", "nonvolatile");
+
+    calls.clear();
+    hooked.setDrawingDoubleBuffered(false);
+    Graphics2D g2 = img.createGraphics();
+    g2.setClip(0, 0, 60, 40);
+    hooked.paintComponent(g2);
+    g2.dispose();
+    assertThat(calls).containsExactly("direct");
+  }
 }

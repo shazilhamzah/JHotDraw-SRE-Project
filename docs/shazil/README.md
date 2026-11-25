@@ -29,18 +29,18 @@ This folder documents the re-engineering work for `jhotdraw-core`'s `DefaultDraw
 |---|---:|---:|---:|
 | File Lines | 1,550 | 932 | -618 (-39.9%) |
 | Class LOC (`DefaultDrawingView`) | 1,476 | 876 | -600 (-40.7%) |
-| Class SLOC (`DefaultDrawingView`) | 1,185 | 676 | -509 (-43.0%) |
+| Class SLOC (`DefaultDrawingView`) | 1,185 | 675 | -510 (-43.0%) |
 | Fields (`NOF`) | 30 | 25 | -5 (-16.7%) |
-| Weighted Methods per Class (`WMC`) | 237 | 137 | -100 (-42.2%) |
+| Weighted Methods per Class (`WMC`) | 237 | 138 | -99 (-41.8%) |
 | Max Cyclomatic Complexity (`MaxCC`) | 22 | 5 | -17 (-77.3%) |
-| Mean Cyclomatic Complexity (`AvgCC`) | 2.93 | 1.59 | -1.34 (-45.7%) |
+| Mean Cyclomatic Complexity (`AvgCC`) | 2.93 | 1.60 | -1.33 (-45.4%) |
 | Coupling Between Objects (`CBO`) | 52 | 45 | -7 (-13.5%) |
 | `LCOM1` | 2,814 | 2,722 | -92 (-3.3%) |
 | `LCOM*` | 0.9611 | 0.9349 | -0.0262 (-2.7%) |
 | PMD Violations (`DefaultDrawingView` + helpers) | 5 | 0 | -5 (-100.0%) |
-| `jhotdraw-core` Automated Tests | 7 | 49 | +42 (+600%) |
+| `jhotdraw-core` Automated Tests | 7 | 50 | +43 (+614%) |
 
-*(Note: `DefaultDrawingView` retains 86 methods because all `DrawingView` / `EditableComponent` / `protected` methods remain on the facade as thin 1-3 line delegators, which explains why `LCOM1` remains dominated by facade delegation while `WMC` dropped 42.2% and `MaxCC` dropped 77.3% from 22 to 5.)*
+*(Note: `DefaultDrawingView` retains 86 methods because all `DrawingView` / `EditableComponent` / `protected` methods remain on the facade as thin 1-3 line delegators, which explains why `LCOM1` remains dominated by facade delegation while `WMC` dropped 41.8% and `MaxCC` dropped 77.3% from 22 to 5.)*
 
 ## Document Index
 
