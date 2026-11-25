@@ -1,0 +1,594 @@
+package org.jhotdraw.samples.svg.io;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.awt.Color;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
+import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Locale;
+import javax.imageio.ImageIO;
+import org.jhotdraw.draw.DefaultDrawing;
+import org.jhotdraw.samples.svg.SVGAttributeKeys;
+import org.jhotdraw.samples.svg.figures.SVGImageFigure;
+import org.jhotdraw.utils.util.LocaleUtil;
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
+
+class SVGImportIntegrationTest {
+  private void read(String svg, DefaultDrawing drawing, boolean replace) throws IOException {
+    new SVGInputFormat()
+        .read(new ByteArrayInputStream(svg.getBytes(StandardCharsets.UTF_8)), drawing, replace);
+  }
+
+  @Test
+  void importsEmptySvgDocument() throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read("<svg xmlns='http://www.w3.org/2000/svg'/>", drawing, true);
+    assertTrue(drawing.getChildren().isEmpty());
+  }
+
+  @Test
+  void importsRectangleWithWhitespaceAndComment() throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(
+        "<svg xmlns='http://www.w3.org/2000/svg'>\n<!-- rectangle -->\n"
+            + "<rect x='10' y='20' width='30' height='40'/>\n</svg>",
+        drawing,
+        true);
+    assertEquals(1, drawing.getChildren().size());
+  }
+
+  @Test
+  void rejectsMissingSvgRoot() {
+    assertThrows(IOException.class, () -> read("<root/>", new DefaultDrawing(), true));
+  }
+
+  @Test
+  void inheritOnRootAttributeFallsBackToDefault() throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(
+        "<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'"
+            + " viewBox='inherit'><rect width='10' height='10'/></svg>",
+        drawing,
+        true);
+    assertEquals(1, drawing.getChildren().size());
+  }
+
+  private static String svg(String body) {
+    return "<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'>" + body + "</svg>";
+  }
+
+  @ParameterizedTest
+  @ValueSource(
+      strings = {
+        "<rect x='10' y='20' width='30' height='40'/>",
+        "<circle cx='50' cy='50' r='20'/>",
+        "<ellipse cx='50' cy='50' rx='20' ry='10'/>",
+        "<line x1='10' y1='10' x2='50' y2='50'/>",
+        "<polyline points='10,10 50,50 80,10'/>",
+        "<polygon points='10,10 50,50 80,10'/>",
+        "<path d='M10 10 L50 50 L80 10 Z'/>"
+      })
+  void importsBasicShapes(String body) throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(svg(body), drawing, true);
+    assertEquals(1, drawing.getChildren().size());
+  }
+
+  @ParameterizedTest
+  @ValueSource(
+      strings = {
+        "M10 10 L50 50 H80 V90 Z",
+        "m10 10 l40 40 h30 v40 z",
+        "M10 10 C20 30 40 30 50 50 S70 80 90 90",
+        "m10 10 c10 20 30 20 40 40 s20 30 40 40",
+        "M10 10 Q30 40 50 50 T90 90",
+        "m10 10 q20 30 40 40 t40 40",
+        "M10 10 A20 20 0 0 1 50 50",
+        "m10 10 a20 20 0 0 1 40 40"
+      })
+  void importsPathCommands(String path) throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(svg("<path d='" + path + "'/>"), drawing, true);
+    assertEquals(1, drawing.getChildren().size());
+  }
+
+  @ParameterizedTest
+  @ValueSource(
+      strings = {
+        "matrix(1,0,0,1,10,20)",
+        "translate(10,20)",
+        "scale(2,3)",
+        "rotate(30)",
+        "skewX(15)",
+        "skewY(15)",
+        "translate(10,20) scale(2)"
+      })
+  void importsTransforms(String transform) throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(svg("<rect width='20' height='30' transform='" + transform + "'/>"), drawing, true);
+    assertEquals(1, drawing.getChildren().size());
+  }
+
+  @Test
+  void importsGroupAndSkipsHiddenShapes() throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(
+        svg("<g><rect width='20' height='30'/></g>"
+            + "<rect width='20' height='30' display='none'/>"),
+        drawing,
+        true);
+    assertEquals(1, drawing.getChildren().size());
+  }
+
+  @Test
+  void importsStyledRectangle() throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(
+        svg("<rect width='20' height='30' style='fill:red;stroke:blue;opacity:0.5'/>"),
+        drawing,
+        true);
+    assertEquals(1, drawing.getChildren().size());
+  }
+
+  @Test
+  void importsPrefixedSvg() throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(
+        "<s:svg xmlns:s='http://www.w3.org/2000/svg'><s:rect width='20' height='30'/></s:svg>",
+        drawing,
+        true);
+    assertEquals(1, drawing.getChildren().size());
+  }
+
+  @Test
+  void readsFileAndUrl(@TempDir Path dir) throws IOException {
+    Path file = dir.resolve("drawing.svg");
+    Files.writeString(file, svg("<rect width='20' height='30'/>"));
+    SVGInputFormat format = new SVGInputFormat();
+    DefaultDrawing drawing = new DefaultDrawing();
+    format.read(file.toFile(), drawing, true);
+    assertEquals(1, drawing.getChildren().size());
+    format.read(file.toUri().toURL(), drawing, false);
+    assertEquals(2, drawing.getChildren().size());
+  }
+
+  @Test
+  void reusesReaderAndReplacesDrawing() throws IOException {
+    SVGInputFormat format = new SVGInputFormat();
+    DefaultDrawing drawing = new DefaultDrawing();
+    byte[] data = svg("<rect width='20' height='30'/>").getBytes(StandardCharsets.UTF_8);
+    format.read(new ByteArrayInputStream(data), drawing, true);
+    format.read(new ByteArrayInputStream(data), drawing, false);
+    assertEquals(2, drawing.getChildren().size());
+    format.read(new ByteArrayInputStream(data), drawing, true);
+    assertEquals(1, drawing.getChildren().size());
+  }
+
+  @Test
+  void rejectsMalformedXml() {
+    assertThrows(IOException.class, () -> read("<svg>", new DefaultDrawing(), true));
+  }
+
+  @Test
+  void rectangleGeometryIsPreserved() throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(svg("<rect x='10' y='20' width='30' height='40'/>"), drawing, true);
+    Rectangle2D bounds = drawing.getChildren().get(0).getBounds();
+    assertEquals(10, bounds.getX(), 0.001);
+    assertEquals(20, bounds.getY(), 0.001);
+    assertEquals(30, bounds.getWidth(), 0.001);
+    assertEquals(40, bounds.getHeight(), 0.001);
+  }
+
+  @ParameterizedTest
+  @ValueSource(
+      strings = {
+        "<defs><linearGradient id='p'><stop offset='0' stop-color='red'/><stop offset='1' stop-color='blue'/></linearGradient></defs><rect width='20' height='30' fill='url(#p)'/>",
+        "<defs><radialGradient id='p'><stop offset='0' stop-color='red'/><stop offset='1' stop-color='blue'/></radialGradient></defs><rect width='20' height='30' fill='url(#p)'/>",
+        "<defs><solidColor id='p' solid-color='red'/></defs><rect width='20' height='30' fill='url(#p)'/>",
+        "<style type='text/css'>rect { fill: red; }</style><rect width='20' height='30'/>",
+        "<g fill='red'><rect width='20' height='30' fill='inherit'/></g>",
+        "<rect width='20' height='30' color='red' fill='currentcolor'/>",
+        "<rect width='20' height='30' stroke='blue' stroke-width='2' stroke-dasharray='2,3' opacity='0.5'/>",
+        "<text x='10' y='30' font-size='12'>Hello</text>",
+        "<text x='10' y='30' xml:space='preserve'>A <tspan>B</tspan></text>",
+        "<textArea x='10' y='10' width='100' height='50'>Hello</textArea>",
+        "<a href='https://example.com'><rect width='20' height='30'/></a>",
+        "<switch><rect width='20' height='30'/></switch>",
+        "<svg x='10' y='10' width='100' height='100' viewBox='0 0 50 50'><rect width='20' height='30'/></svg>",
+        "<defs><rect id='r' width='20' height='30'/></defs><use xmlns:xlink='http://www.w3.org/1999/xlink' xlink:href='#r'/>",
+        "<image width='20' height='20' href='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jR1sAAAAASUVORK5CYII='/>"
+      })
+  void importsAdditionalSvgFeatures(String body) throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(svg(body), drawing, true);
+    assertEquals(1, drawing.getChildren().size());
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"20px", "20pt", "2pc", "20mm", "2cm", "1in", "20%", "2em"})
+  void importsLengthUnits(String width) throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(svg("<rect width='" + width + "' height='30'/>"), drawing, true);
+    assertEquals(1, drawing.getChildren().size());
+    assertTrue(drawing.getChildren().get(0).getBounds().getWidth() > 0);
+  }
+
+  @Test
+  void clipboardHonorsReplace() throws Exception {
+    byte[] bytes = svg("<rect width='20' height='30'/>").getBytes(StandardCharsets.UTF_8);
+    DataFlavor flavor = new DataFlavor("image/svg+xml", "Image SVG");
+    Transferable transferable = new Transferable() {
+      public DataFlavor[] getTransferDataFlavors() {
+        return new DataFlavor[] {flavor};
+      }
+
+      public boolean isDataFlavorSupported(DataFlavor candidate) {
+        return flavor.equals(candidate);
+      }
+
+      public Object getTransferData(DataFlavor candidate) throws UnsupportedFlavorException {
+        if (!isDataFlavorSupported(candidate)) {
+          throw new UnsupportedFlavorException(candidate);
+        }
+        return new ByteArrayInputStream(bytes);
+      }
+    };
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(svg("<circle cx='20' cy='20' r='10'/>"), drawing, true);
+    new SVGInputFormat().read(transferable, drawing, false);
+    assertEquals(2, drawing.getChildren().size());
+    new SVGInputFormat().read(transferable, drawing, true);
+    assertEquals(1, drawing.getChildren().size());
+    assertEquals(20, drawing.getChildren().get(0).getBounds().getWidth(), 0.001);
+    assertEquals(30, drawing.getChildren().get(0).getBounds().getHeight(), 0.001);
+  }
+
+  @Test
+  void importsRelativeImages(@TempDir Path dir) throws IOException {
+    Path png = dir.resolve("pixel.png");
+    ImageIO.write(new BufferedImage(2, 2, BufferedImage.TYPE_INT_RGB), "png", png.toFile());
+    Files.writeString(dir.resolve("nested.svg"), svg("<rect width='20' height='30'/>"));
+    Path file = dir.resolve("drawing.svg");
+    Files.writeString(
+        file,
+        svg("<image width='20' height='30' href='pixel.png'/>"
+            + "<image x='30' width='20' height='30' href='nested.svg'/>"));
+    DefaultDrawing drawing = new DefaultDrawing();
+    new SVGInputFormat().read(file.toFile(), drawing, true);
+    assertEquals(2, drawing.getChildren().size());
+  }
+
+  @Test
+  void missingRasterDoesNotPreventOtherFigures(@TempDir Path dir) throws IOException {
+    Path file = dir.resolve("drawing.svg");
+    Files.writeString(
+        file,
+        svg("<image width='20' height='30' href='missing.png'/>"
+            + "<rect x='40' width='20' height='30'/>"));
+    DefaultDrawing drawing = new DefaultDrawing();
+    new SVGInputFormat().read(file.toUri().toURL(), drawing, true);
+    assertTrue(drawing.getChildren().stream()
+        .anyMatch(figure -> Math.abs(figure.getBounds().getX() - 40) < 0.001));
+  }
+
+  @Test
+  void switchSkipsUnsupportedFeatures() throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(
+        svg("<switch><rect requiredFeatures='urn:unsupported' width='10' height='10'/>"
+            + "<rect x='40' width='20' height='30'/></switch>"),
+        drawing,
+        true);
+    assertEquals(1, drawing.getChildren().size());
+    assertEquals(40, drawing.getChildren().get(0).getBounds().getX(), 0.001);
+  }
+
+  @Test
+  void useResolvesXmlId() throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(
+        svg("<defs><rect xml:id='r' width='20' height='30'/></defs>"
+            + "<use xmlns:xlink='http://www.w3.org/1999/xlink' xlink:href='#r'/>"),
+        drawing,
+        true);
+    assertEquals(1, drawing.getChildren().size());
+  }
+
+  @Test
+  void useResolvesUnprefixedHref() throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(
+        svg("<defs><rect id='r' width='20' height='30'/></defs>" + "<use href='#r'/>"),
+        drawing,
+        true);
+    assertEquals(1, drawing.getChildren().size());
+  }
+
+  @Test
+  void switchMatchesLanguageTagIgnoringCase() throws IOException {
+    Locale locale = LocaleUtil.getDefault();
+    Assumptions.assumeFalse(locale.getLanguage().isEmpty());
+    String tag = locale.getLanguage().toUpperCase(Locale.ROOT);
+    if (!locale.getCountry().isEmpty()) {
+      tag += "-" + locale.getCountry().toUpperCase(Locale.ROOT);
+    }
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(
+        svg("<switch><rect systemLanguage='" + tag
+            + "' x='40' width='20' height='30'/><rect width='10' height='10'/></switch>"),
+        drawing,
+        true);
+    assertEquals(1, drawing.getChildren().size());
+    assertEquals(40, drawing.getChildren().get(0).getBounds().getX(), 0.001);
+  }
+
+  @Test
+  void circularUseDoesNotPreventOtherFigures() throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(
+        svg("<defs><use id='loop' href='#loop'/></defs><use href='#loop'/>"
+            + "<rect x='40' width='20' height='30'/>"),
+        drawing,
+        true);
+    assertEquals(1, drawing.getChildren().size());
+    assertEquals(40, drawing.getChildren().get(0).getBounds().getX(), 0.001);
+  }
+
+  @Test
+  void indirectCircularUseDoesNotPreventOtherFigures() throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(
+        svg("<defs><use id='a' href='#b'/><use id='b' href='#a'/></defs>"
+            + "<use href='#a'/><rect x='40' width='20' height='30'/>"),
+        drawing,
+        true);
+    assertEquals(1, drawing.getChildren().size());
+    assertEquals(40, drawing.getChildren().get(0).getBounds().getX(), 0.001);
+  }
+
+  @Test
+  void repeatedValidReferencesAreNotTreatedAsCycles() throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(
+        svg("<defs><rect id='r' width='20' height='30'/></defs>"
+            + "<use href='#r'/><use href='#r' x='40'/>"),
+        drawing,
+        true);
+    assertEquals(2, drawing.getChildren().size());
+  }
+
+  @Test
+  void circularReferenceDoesNotBlockLaterValidReference() throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(
+        svg("<defs><use id='loop' href='#loop'/><rect id='r' width='20' height='30'/></defs>"
+            + "<use href='#loop'/><use href='#r'/>"),
+        drawing,
+        true);
+    assertEquals(1, drawing.getChildren().size());
+    assertEquals(20, drawing.getChildren().get(0).getBounds().getWidth(), 0.001);
+  }
+
+  @Test
+  void inlinePaintValuesArePreserved() throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(svg("<rect width='20' height='30' style='fill:red;stroke:blue'/>"), drawing, true);
+    var figure = drawing.getChildren().get(0);
+    assertEquals(Color.RED, SVGAttributeKeys.FILL_COLOR.get(figure));
+    assertEquals(Color.BLUE, SVGAttributeKeys.STROKE_COLOR.get(figure));
+  }
+
+  @Test
+  void currentColorIsResolved() throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(svg("<rect width='20' height='30' color='red' fill='currentcolor'/>"), drawing, true);
+    assertEquals(
+        Color.RED, SVGAttributeKeys.FILL_COLOR.get(drawing.getChildren().get(0)));
+  }
+
+  @Test
+  void pixelDimensionsArePreserved() throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(svg("<rect width='20px' height='30px'/>"), drawing, true);
+    assertEquals(20, drawing.getChildren().get(0).getBounds().getWidth(), 0.001);
+    assertEquals(30, drawing.getChildren().get(0).getBounds().getHeight(), 0.001);
+  }
+
+  @Test
+  void explicitFontSizeIsPreserved() throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(svg("<text x='10' y='30' font-size='18'>Hello</text>"), drawing, true);
+    assertEquals(18.0, SVGAttributeKeys.FONT_SIZE.get(drawing.getChildren().get(0)), 0.001);
+  }
+
+  @Test
+  void viewBoxScalesRectangleUniformly() throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(
+        "<svg xmlns='http://www.w3.org/2000/svg' width='200' height='100' "
+            + "viewBox='0 0 50 50'><rect width='10' height='20'/></svg>",
+        drawing,
+        true);
+    var figure = drawing.getChildren().get(0);
+    var transform = SVGAttributeKeys.TRANSFORM.get(figure);
+    assertNotNull(transform);
+    var bounds = transform.createTransformedShape(figure.getBounds()).getBounds2D();
+    assertEquals(20, bounds.getWidth(), 0.001);
+    assertEquals(40, bounds.getHeight(), 0.001);
+  }
+
+  @Test
+  void nestedViewportWithoutAspectRatioUsesIndependentScales() throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(
+        svg("<svg width='100' height='50' viewBox='0 0 50 50' preserveAspectRatio='none'>"
+            + "<rect width='10' height='20'/></svg>"),
+        drawing,
+        true);
+    var figure = drawing.getChildren().get(0);
+    var transform = SVGAttributeKeys.TRANSFORM.get(figure);
+    assertNotNull(transform);
+    var bounds = transform.createTransformedShape(figure.getBounds()).getBounds2D();
+    assertEquals(20, bounds.getWidth(), 0.001);
+    assertEquals(20, bounds.getHeight(), 0.001);
+  }
+
+  @Test
+  void inheritsFontSizeFromRoot() throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(
+        "<svg xmlns='http://www.w3.org/2000/svg' font-size='24'>"
+            + "<text x='10' y='30' font-size='inherit'>Hello</text></svg>",
+        drawing,
+        true);
+    assertEquals(24.0, SVGAttributeKeys.FONT_SIZE.get(drawing.getChildren().get(0)), 0.001);
+  }
+
+  @Test
+  void hiddenRectangleIsNotImported() throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(
+        svg("<rect width='10' height='10' visibility='hidden'/>"
+            + "<rect x='40' width='20' height='30'/>"),
+        drawing,
+        true);
+    assertEquals(1, drawing.getChildren().size());
+    assertEquals(40, drawing.getChildren().get(0).getBounds().getX(), 0.001);
+  }
+
+  @Test
+  void relativeRasterUrlPreservesDecodedPixels(@TempDir Path dir) throws IOException {
+    var raster = new BufferedImage(3, 2, BufferedImage.TYPE_INT_RGB);
+    raster.setRGB(1, 1, Color.RED.getRGB());
+    ImageIO.write(raster, "png", dir.resolve("pixel.png").toFile());
+    var file = dir.resolve("drawing.svg");
+    Files.writeString(file, svg("<image width='30' height='20' href='pixel.png'/>"));
+    DefaultDrawing drawing = new DefaultDrawing();
+    new SVGInputFormat().read(file.toUri().toURL(), drawing, true);
+    assertEquals(1, drawing.getChildren().size());
+    var figure = (SVGImageFigure) drawing.getChildren().get(0);
+    var decoded = figure.getBufferedImage();
+    assertNotNull(decoded);
+    assertEquals(3, decoded.getWidth());
+    assertEquals(2, decoded.getHeight());
+    assertEquals(Color.RED.getRGB(), decoded.getRGB(1, 1));
+  }
+
+  @Test
+  void circleAndEllipseGeometryIsPreserved() throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(
+        svg("<circle cx='50' cy='60' r='20'/>" + "<ellipse cx='100' cy='80' rx='30' ry='10'/>"),
+        drawing,
+        true);
+    assertEquals(2, drawing.getChildren().size());
+    var circle = drawing.getChildren().get(0).getBounds();
+    assertEquals(30, circle.getX(), 0.001);
+    assertEquals(40, circle.getY(), 0.001);
+    assertEquals(40, circle.getWidth(), 0.001);
+    assertEquals(40, circle.getHeight(), 0.001);
+    var ellipse = drawing.getChildren().get(1).getBounds();
+    assertEquals(70, ellipse.getX(), 0.001);
+    assertEquals(70, ellipse.getY(), 0.001);
+    assertEquals(60, ellipse.getWidth(), 0.001);
+    assertEquals(20, ellipse.getHeight(), 0.001);
+  }
+  // Characterize the legacy 90 dpi conversion convention without changing it.
+  @ParameterizedTest
+  @CsvSource({"20pt,25", "2pc,30", "20mm,70.86614", "2cm,70.86614", "1in,90"})
+  void preservesLegacyPhysicalUnitConversions(String width, double expected) throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(svg("<rect width='" + width + "' height='30'/>"), drawing, true);
+    assertEquals(1, drawing.getChildren().size());
+    assertEquals(expected, drawing.getChildren().get(0).getBounds().getWidth(), 0.001);
+  }
+
+  @Test
+  void strokeWidthAndPaintOpacityArePreserved() throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(
+        svg("<rect width='20' height='30' stroke='blue' stroke-width='3' "
+            + "stroke-opacity='0.4' fill='red' fill-opacity='0.6'/>"),
+        drawing,
+        true);
+    var figure = drawing.getChildren().get(0);
+    assertEquals(3.0, SVGAttributeKeys.STROKE_WIDTH.get(figure), 0.001);
+    assertEquals(0.4, SVGAttributeKeys.STROKE_OPACITY.get(figure), 0.001);
+    assertEquals(0.6, SVGAttributeKeys.FILL_OPACITY.get(figure), 0.001);
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"linearGradient", "radialGradient"})
+  void resolvesGradientPaint(String kind) throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(
+        svg("<defs><" + kind + " id='p'><stop offset='0' stop-color='red'/>"
+            + "<stop offset='1' stop-color='blue'/></" + kind + "></defs>"
+            + "<rect width='20' height='30' fill='url(#p)'/>"),
+        drawing,
+        true);
+    assertEquals(1, drawing.getChildren().size());
+    assertNotNull(SVGAttributeKeys.FILL_GRADIENT.get(drawing.getChildren().get(0)));
+  }
+
+  @Test
+  void stylesheetFillIsApplied() throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(
+        svg("<style type='text/css'>rect { fill: red; }</style>"
+            + "<rect width='20' height='30'/>"),
+        drawing,
+        true);
+    assertEquals(
+        Color.RED, SVGAttributeKeys.FILL_COLOR.get(drawing.getChildren().get(0)));
+  }
+
+  @Test
+  void percentageWidthUsesViewport() throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(svg("<rect width='20%' height='30'/>"), drawing, true);
+    assertEquals(40.0, drawing.getChildren().get(0).getBounds().getWidth(), 0.001);
+  }
+
+  @ParameterizedTest
+  @CsvSource(
+      value = {
+        "translate(10,20);10;20;20;30",
+        "scale(2,3);0;0;40;90",
+        "matrix(1,0,0,1,10,20);10;20;20;30",
+        "translate(10,20) scale(2);10;20;40;60",
+        "rotate(90);-30;0;30;20",
+        "skewX(45);0;0;50;30",
+        "skewY(45);0;0;20;50"
+      },
+      delimiter = ';')
+  void preservesTransformedRectangleGeometry(
+      String operation, double x, double y, double width, double height) throws IOException {
+    DefaultDrawing drawing = new DefaultDrawing();
+    read(svg("<rect width='20' height='30' transform='" + operation + "'/>"), drawing, true);
+    assertEquals(1, drawing.getChildren().size());
+    var figure = drawing.getChildren().get(0);
+    var transform = SVGAttributeKeys.TRANSFORM.get(figure);
+    var bounds = transform == null
+        ? figure.getBounds()
+        : transform.createTransformedShape(figure.getBounds()).getBounds2D();
+    assertEquals(x, bounds.getX(), 0.001);
+    assertEquals(y, bounds.getY(), 0.001);
+    assertEquals(width, bounds.getWidth(), 0.001);
+    assertEquals(height, bounds.getHeight(), 0.001);
+  }
+}

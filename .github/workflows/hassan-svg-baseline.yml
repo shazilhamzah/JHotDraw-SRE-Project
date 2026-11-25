@@ -1,0 +1,86 @@
+name: Hassan SVG baseline
+on:
+  push:
+    branches: [hassan-svg-refactoring]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+          cache-dependency-path: jhotdraw-src/**/pom.xml
+      - name: Run SVG module and dependency tests
+        working-directory: jhotdraw-src
+        run: mvn -B -pl jhotdraw-samples/jhotdraw-samples-misc -am test -Djava.awt.headless=true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-reports
+          path: jhotdraw-src/**/target/surefire-reports/
+  metrics:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Build CK metrics tool
+        run: |
+          git clone --depth 1 https://github.com/mauricioaniche/ck.git /tmp/ck
+          mvn -B -f /tmp/ck/pom.xml package -DskipTests
+      - name: Collect CK metrics
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/metrics"
+          JAR=$(find /tmp/ck/target -name '*jar-with-dependencies.jar' -print -quit)
+          test -n "$JAR"
+          java -jar "$JAR" "$GITHUB_WORKSPACE/jhotdraw-src" false 0 true "$GITHUB_WORKSPACE/metrics/"
+          head -n 1 metrics/class.csv
+          grep -E 'SVGInputFormat,|SVGPathParser,' metrics/class.csv
+      - name: PMD complexity analysis
+        if: always()
+        run: |
+          mkdir -p metrics
+          mkdir -p /tmp/pmd
+          curl -fsSL https://github.com/pmd/pmd/releases/download/pmd_releases/7.17.0/pmd-dist-7.17.0-bin.zip -o /tmp/pmd/pmd.zip
+          unzip -q /tmp/pmd/*.zip -d /tmp/pmd
+          PMD=$(find /tmp/pmd -path '*/bin/pmd' -print -quit)
+          "$PMD" check -d jhotdraw-src/jhotdraw-samples/jhotdraw-samples-misc/src/main/java/org/jhotdraw/samples/svg/io/SVGInputFormat.java,jhotdraw-src/jhotdraw-samples/jhotdraw-samples-misc/src/main/java/org/jhotdraw/samples/svg/io/SVGPathParser.java -R category/java/design.xml -f xml -r metrics/pmd.xml --no-fail-on-violation
+      - name: Compare original and refactored metrics
+        run: |
+          git worktree add --detach /tmp/svg-original 4533afd
+          mkdir -p metrics/original
+          JAR=$(find /tmp/ck/target -name '*jar-with-dependencies.jar' -print -quit)
+          java -jar "$JAR" /tmp/svg-original/jhotdraw-src false 0 true "$GITHUB_WORKSPACE/metrics/original/"
+          PMD=$(find /tmp/pmd -path '*/bin/pmd' -print -quit)
+          "$PMD" check -d /tmp/svg-original/jhotdraw-src/jhotdraw-samples/jhotdraw-samples-misc/src/main/java/org/jhotdraw/samples/svg/io/SVGInputFormat.java -R category/java/design.xml -f xml -r metrics/original/pmd.xml --no-fail-on-violation
+          python3 - <<'PY'
+          import csv, collections, xml.etree.ElementTree as ET
+          for label, prefix in [('Before', 'metrics/original/'), ('After', 'metrics/')]:
+              print(label)
+              with open(prefix + 'class.csv') as f:
+                  for row in csv.DictReader(f):
+                      if row['class'].endswith(('.SVGInputFormat', '.SVGPathParser')):
+                          print(row)
+              with open(prefix + 'method.csv') as f:
+                  rows = [row for row in csv.DictReader(f) if row['class'].endswith(('.SVGInputFormat', '.SVGPathParser'))]
+                  print('CK method columns:', list(rows[0]) if rows else [])
+                  for row in rows:
+                      print('Method metrics:', row)
+              counts = collections.Counter(v.attrib['rule'] for v in ET.parse(prefix + 'pmd.xml').getroot().iter() if v.tag.split('}')[-1] == 'violation')
+              print('PMD total:', sum(counts.values()), dict(counts))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: baseline-metrics
+          path: metrics/
