@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.geom.AffineTransform;
+import java.io.File;
 import java.io.IOException;
 import org.junit.jupiter.api.Test;
 
@@ -15,13 +16,16 @@ class SVGInputFormatTest {
 
   @Test
   void whitespaceAndCommaSeparatedValues() throws IOException {
-    assertArrayEquals(new String[] {"1", "2", "3"}, SVGInputFormat.toWSOrCommaSeparatedArray("1 2,3"));
+    assertArrayEquals(
+        new String[] {"1", "2", "3"}, SVGInputFormat.toWSOrCommaSeparatedArray("1 2,3"));
     assertArrayEquals(new String[0], SVGInputFormat.toWSOrCommaSeparatedArray(""));
   }
 
   @Test
   void quotedFontNames() throws IOException {
-    assertArrayEquals(new String[] {"Times New Roman", "Arial"}, SVGInputFormat.toQuotedAndCommaSeparatedArray("'Times New Roman', Arial"));
+    assertArrayEquals(
+        new String[] {"Times New Roman", "Arial"},
+        SVGInputFormat.toQuotedAndCommaSeparatedArray("'Times New Roman', Arial"));
   }
 
   @Test
@@ -29,8 +33,8 @@ class SVGInputFormatTest {
     SVGInputFormat format = new SVGInputFormat();
     assertTrue(format.isDataFlavorSupported(new DataFlavor("image/svg+xml", "SVG")));
     assertFalse(format.isDataFlavorSupported(DataFlavor.stringFlavor));
-    assertTrue(format.getFileFilter().accept(new java.io.File("drawing.svg")));
-    assertFalse(format.getFileFilter().accept(new java.io.File("drawing.txt")));
+    assertTrue(format.getFileFilter().accept(new File("drawing.svg")));
+    assertFalse(format.getFileFilter().accept(new File("drawing.txt")));
   }
 
   @Test

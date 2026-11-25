@@ -569,5 +569,4 @@ final class SVGPathParser {
     }
     return paths.toArray(new BezierPath[paths.size()]);
   }
-
 }
