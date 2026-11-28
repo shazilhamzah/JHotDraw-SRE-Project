@@ -1006,12 +1006,15 @@ public class SVGOutputFormat implements OutputFormat {
       StringBuilder buf, BezierPath.Node previous, BezierPath.Node current, char lastCommand) {
     boolean previousCurved = (previous.mask & BezierPath.C2_MASK) != 0;
     boolean currentCurved = (current.mask & BezierPath.C1_MASK) != 0;
-    char command =
-        previousCurved && currentCurved ? 'C' : (previousCurved || currentCurved ? 'Q' : 'L');
-    if (command == lastCommand) {
-      buf.append(' ');
-    } else {
-      buf.append(' ').append(command).append(' ');
+    char command = 'L';
+    if (previousCurved && currentCurved) {
+      command = 'C';
+    } else if (previousCurved || currentCurved) {
+      command = 'Q';
+    }
+    buf.append(' ');
+    if (command != lastCommand) {
+      buf.append(command).append(' ');
     }
     if (command == 'C') {
       appendPoint(buf, previous.x[2], previous.y[2]);
