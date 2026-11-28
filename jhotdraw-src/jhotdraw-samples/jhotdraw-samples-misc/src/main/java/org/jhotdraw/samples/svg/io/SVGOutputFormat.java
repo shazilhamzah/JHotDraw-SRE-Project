@@ -122,7 +122,7 @@ public class SVGOutputFormat implements OutputFormat {
     if (f.attr().get(LINK) != null && f.attr().get(LINK).trim().length() > 0) {
       Element aElement = parent.getOwnerDocument().createElement("a");
       aElement.setAttribute("xlink:href", f.attr().get(LINK));
-      if (f.attr().get(LINK_TARGET) != null && f.attr().get(LINK).trim().length() > 0) {
+      if (f.attr().get(LINK_TARGET) != null && f.attr().get(LINK_TARGET).trim().length() > 0) {
         aElement.setAttribute("target", f.attr().get(LINK_TARGET));
       }
       parent.appendChild(aElement);
@@ -579,7 +579,7 @@ public class SVGOutputFormat implements OutputFormat {
       if (i != 0) {
         elem.appendChild(doc.getOwnerDocument().createElement("tbreak"));
       }
-      Element contentElement = doc.getOwnerDocument().createElement(null);
+      Element contentElement = doc.getOwnerDocument().createElement("tspan");
       contentElement.setTextContent(lines[i]);
       elem.appendChild(contentElement);
     }
@@ -588,6 +588,48 @@ public class SVGOutputFormat implements OutputFormat {
     writeOpacityAttribute(elem, attributes);
     writeFontAttributes(elem, attributes);
     return elem;
+  }
+
+  /** Returns the id of the definition element for the gradient, creating it on first use. */
+  private String getGradientId(Gradient gradient) throws IOException {
+    String id = gradientToIDMap.get(gradient);
+    if (id != null) {
+      return id;
+    }
+    Element gradientElem;
+    if (gradient instanceof LinearGradient) {
+      LinearGradient lg = (LinearGradient) gradient;
+      gradientElem = createLinearGradient(
+          document,
+          lg.getX1(),
+          lg.getY1(),
+          lg.getX2(),
+          lg.getY2(),
+          lg.getStopOffsets(),
+          lg.getStopColors(),
+          lg.getStopOpacities(),
+          lg.isRelativeToFigureBounds(),
+          lg.getTransform());
+    } else {
+      RadialGradient rg = (RadialGradient) gradient;
+      gradientElem = createRadialGradient(
+          document,
+          rg.getCX(),
+          rg.getCY(),
+          rg.getFX(),
+          rg.getFY(),
+          rg.getR(),
+          rg.getStopOffsets(),
+          rg.getStopColors(),
+          rg.getStopOpacities(),
+          rg.isRelativeToFigureBounds(),
+          rg.getTransform());
+    }
+    id = getId(gradientElem);
+    gradientElem.setAttributeNS("xml", "id", id);
+    defs.appendChild(gradientElem);
+    gradientToIDMap.put(gradient, id);
+    return id;
   }
 
   // ------------
@@ -631,45 +673,7 @@ public class SVGOutputFormat implements OutputFormat {
     // Computed value:    "none", system paint, specified <color> value or absolute IRI
     Gradient gradient = FILL_GRADIENT.get(m);
     if (gradient != null) {
-      String id;
-      if (gradientToIDMap.containsKey(gradient)) {
-        id = gradientToIDMap.get(gradient);
-      } else {
-        Element gradientElem;
-        if (gradient instanceof LinearGradient) {
-          LinearGradient lg = (LinearGradient) gradient;
-          gradientElem = createLinearGradient(
-              document,
-              lg.getX1(),
-              lg.getY1(),
-              lg.getX2(),
-              lg.getY2(),
-              lg.getStopOffsets(),
-              lg.getStopColors(),
-              lg.getStopOpacities(),
-              lg.isRelativeToFigureBounds(),
-              lg.getTransform());
-        } else /*if (gradient instanceof RadialGradient)*/ {
-          RadialGradient rg = (RadialGradient) gradient;
-          gradientElem = createRadialGradient(
-              document,
-              rg.getCX(),
-              rg.getCY(),
-              rg.getFX(),
-              rg.getFY(),
-              rg.getR(),
-              rg.getStopOffsets(),
-              rg.getStopColors(),
-              rg.getStopOpacities(),
-              rg.isRelativeToFigureBounds(),
-              rg.getTransform());
-        }
-        id = getId(gradientElem);
-        gradientElem.setAttributeNS("xml", "id", id);
-        defs.appendChild(gradientElem);
-        gradientToIDMap.put(gradient, id);
-      }
-      writeAttribute(elem, "fill", "url(#" + id + ")", "#000");
+      writeAttribute(elem, "fill", "url(#" + getGradientId(gradient) + ")", "#000");
     } else {
       writeAttribute(elem, "fill", toColor(FILL_COLOR.get(m)), "#000");
     }
@@ -707,45 +711,7 @@ public class SVGOutputFormat implements OutputFormat {
     // or absolute IRI
     gradient = STROKE_GRADIENT.get(m);
     if (gradient != null) {
-      String id;
-      if (gradientToIDMap.containsKey(gradient)) {
-        id = gradientToIDMap.get(gradient);
-      } else {
-        Element gradientElem;
-        if (gradient instanceof LinearGradient) {
-          LinearGradient lg = (LinearGradient) gradient;
-          gradientElem = createLinearGradient(
-              document,
-              lg.getX1(),
-              lg.getY1(),
-              lg.getX2(),
-              lg.getY2(),
-              lg.getStopOffsets(),
-              lg.getStopColors(),
-              lg.getStopOpacities(),
-              lg.isRelativeToFigureBounds(),
-              lg.getTransform());
-        } else /*if (gradient instanceof RadialGradient)*/ {
-          RadialGradient rg = (RadialGradient) gradient;
-          gradientElem = createRadialGradient(
-              document,
-              rg.getCX(),
-              rg.getCY(),
-              rg.getFX(),
-              rg.getFY(),
-              rg.getR(),
-              rg.getStopOffsets(),
-              rg.getStopColors(),
-              rg.getStopOpacities(),
-              rg.isRelativeToFigureBounds(),
-              rg.getTransform());
-        }
-        id = getId(gradientElem);
-        gradientElem.setAttributeNS("xml", "id", id);
-        defs.appendChild(gradientElem);
-        gradientToIDMap.put(gradient, id);
-      }
-      writeAttribute(elem, "stroke", "url(#" + id + ")", "none");
+      writeAttribute(elem, "stroke", "url(#" + getGradientId(gradient) + ")", "none");
     } else {
       writeAttribute(elem, "stroke", toColor(STROKE_COLOR.get(m)), "none");
     }
@@ -1002,166 +968,66 @@ public class SVGOutputFormat implements OutputFormat {
    */
   public static String toPath(BezierPath[] paths) {
     StringBuilder buf = new StringBuilder();
-    for (int j = 0; j < paths.length; j++) {
-      BezierPath path = paths[j];
-      if (path.size() == 0) {
-        // nothing to do
-      } else if (path.size() == 1) {
-        BezierPath.Node current = path.nodes().get(0);
-        buf.append("M ");
-        buf.append(toNumber(current.x[0]));
-        buf.append(' ');
-        buf.append(toNumber(current.y[0]));
-        // buf.append(" L ");
-        buf.append(toNumber(current.x[0]));
-        buf.append(' ');
-        buf.append(toNumber(current.y[0] + 1));
-      } else {
-        BezierPath.Node previous;
-        BezierPath.Node current;
-        previous = current = path.nodes().get(0);
-        buf.append("M ");
-        buf.append(toNumber(current.x[0]));
-        buf.append(' ');
-        buf.append(toNumber(current.y[0]));
-        char nextCommand = 'L';
-        for (int i = 1, n = path.size(); i < n; i++) {
-          previous = current;
-          current = path.nodes().get(i);
-          if ((previous.mask & BezierPath.C2_MASK) == 0) {
-            if ((current.mask & BezierPath.C1_MASK) == 0) {
-              if (nextCommand != 'L') {
-                buf.append(" L ");
-                nextCommand = 'L';
-              } else {
-                buf.append(' ');
-              }
-              buf.append(toNumber(current.x[0]));
-              buf.append(' ');
-              buf.append(toNumber(current.y[0]));
-            } else {
-              if (nextCommand != 'Q') {
-                buf.append(" Q ");
-                nextCommand = 'Q';
-              } else {
-                buf.append(' ');
-              }
-              buf.append(toNumber(current.x[1]));
-              buf.append(' ');
-              buf.append(toNumber(current.y[1]));
-              buf.append(' ');
-              buf.append(toNumber(current.x[0]));
-              buf.append(' ');
-              buf.append(toNumber(current.y[0]));
-            }
-          } else {
-            if ((current.mask & BezierPath.C1_MASK) == 0) {
-              if (nextCommand != 'Q') {
-                buf.append(" Q ");
-                nextCommand = 'Q';
-              } else {
-                buf.append(' ');
-              }
-              buf.append(toNumber(previous.x[2]));
-              buf.append(' ');
-              buf.append(toNumber(previous.y[2]));
-              buf.append(' ');
-              buf.append(toNumber(current.x[0]));
-              buf.append(' ');
-              buf.append(toNumber(current.y[0]));
-            } else {
-              if (nextCommand != 'C') {
-                buf.append(" C ");
-                nextCommand = 'C';
-              } else {
-                buf.append(' ');
-              }
-              buf.append(toNumber(previous.x[2]));
-              buf.append(' ');
-              buf.append(toNumber(previous.y[2]));
-              buf.append(' ');
-              buf.append(toNumber(current.x[1]));
-              buf.append(' ');
-              buf.append(toNumber(current.y[1]));
-              buf.append(' ');
-              buf.append(toNumber(current.x[0]));
-              buf.append(' ');
-              buf.append(toNumber(current.y[0]));
-            }
-          }
-        }
-        if (path.isClosed()) {
-          if (path.size() > 1) {
-            previous = path.nodes().get(path.size() - 1);
-            current = path.nodes().get(0);
-            if ((previous.mask & BezierPath.C2_MASK) == 0) {
-              if ((current.mask & BezierPath.C1_MASK) == 0) {
-                if (nextCommand != 'L') {
-                  buf.append(" L ");
-                  nextCommand = 'L';
-                } else {
-                  buf.append(' ');
-                }
-                buf.append(toNumber(current.x[0]));
-                buf.append(' ');
-                buf.append(toNumber(current.y[0]));
-              } else {
-                if (nextCommand != 'Q') {
-                  buf.append(" Q ");
-                  nextCommand = 'Q';
-                } else {
-                  buf.append(' ');
-                }
-                buf.append(toNumber(current.x[1]));
-                buf.append(' ');
-                buf.append(toNumber(current.y[1]));
-                buf.append(' ');
-                buf.append(toNumber(current.x[0]));
-                buf.append(' ');
-                buf.append(toNumber(current.y[0]));
-              }
-            } else {
-              if ((current.mask & BezierPath.C1_MASK) == 0) {
-                if (nextCommand != 'Q') {
-                  buf.append(" Q ");
-                  nextCommand = 'Q';
-                } else {
-                  buf.append(' ');
-                }
-                buf.append(toNumber(previous.x[2]));
-                buf.append(' ');
-                buf.append(toNumber(previous.y[2]));
-                buf.append(' ');
-                buf.append(toNumber(current.x[0]));
-                buf.append(' ');
-                buf.append(toNumber(current.y[0]));
-              } else {
-                if (nextCommand != 'C') {
-                  buf.append(" C ");
-                  nextCommand = 'C';
-                } else {
-                  buf.append(' ');
-                }
-                buf.append(toNumber(previous.x[2]));
-                buf.append(' ');
-                buf.append(toNumber(previous.y[2]));
-                buf.append(' ');
-                buf.append(toNumber(current.x[1]));
-                buf.append(' ');
-                buf.append(toNumber(current.y[1]));
-                buf.append(' ');
-                buf.append(toNumber(current.x[0]));
-                buf.append(' ');
-                buf.append(toNumber(current.y[0]));
-              }
-            }
-          }
-          buf.append(" Z");
-          nextCommand = '\0';
-        }
-      }
+    for (BezierPath path : paths) {
+      appendSubpath(buf, path);
     }
     return buf.toString();
+  }
+
+  private static void appendPoint(StringBuilder buf, double x, double y) {
+    buf.append(toNumber(x)).append(' ').append(toNumber(y));
+  }
+
+  private static void appendSubpath(StringBuilder buf, BezierPath path) {
+    int size = path.size();
+    if (size == 0) {
+      return;
+    }
+    BezierPath.Node first = path.nodes().get(0);
+    buf.append("M ");
+    appendPoint(buf, first.x[0], first.y[0]);
+    if (size == 1) {
+      buf.append(" L ");
+      appendPoint(buf, first.x[0], first.y[0] + 1);
+      return;
+    }
+    char command = 'L';
+    for (int i = 1; i < size; i++) {
+      command = appendSegment(buf, path.nodes().get(i - 1), path.nodes().get(i), command);
+    }
+    if (path.isClosed()) {
+      appendSegment(buf, path.nodes().get(size - 1), first, command);
+      buf.append(" Z");
+    }
+  }
+
+  /** Appends the segment from previous to current and returns the SVG command that was used. */
+  private static char appendSegment(
+      StringBuilder buf, BezierPath.Node previous, BezierPath.Node current, char lastCommand) {
+    boolean previousCurved = (previous.mask & BezierPath.C2_MASK) != 0;
+    boolean currentCurved = (current.mask & BezierPath.C1_MASK) != 0;
+    char command =
+        previousCurved && currentCurved ? 'C' : (previousCurved || currentCurved ? 'Q' : 'L');
+    if (command == lastCommand) {
+      buf.append(' ');
+    } else {
+      buf.append(' ').append(command).append(' ');
+    }
+    if (command == 'C') {
+      appendPoint(buf, previous.x[2], previous.y[2]);
+      buf.append(' ');
+      appendPoint(buf, current.x[1], current.y[1]);
+      buf.append(' ');
+    } else if (command == 'Q') {
+      if (previousCurved) {
+        appendPoint(buf, previous.x[2], previous.y[2]);
+      } else {
+        appendPoint(buf, current.x[1], current.y[1]);
+      }
+      buf.append(' ');
+    }
+    appendPoint(buf, current.x[0], current.y[0]);
+    return command;
   }
 
   /** Returns a double array as a number attribute value. */
@@ -1315,7 +1181,7 @@ public class SVGOutputFormat implements OutputFormat {
     try {
       dBuilder = dbFactory.newDocumentBuilder();
     } catch (ParserConfigurationException ex) {
-      Logger.getLogger(ImageMapOutputFormat.class.getName()).log(Level.SEVERE, null, ex);
+      Logger.getLogger(SVGOutputFormat.class.getName()).log(Level.SEVERE, null, ex);
       throw new IOException(ex);
     }
     Document doc = dBuilder.newDocument();
@@ -1330,13 +1196,10 @@ public class SVGOutputFormat implements OutputFormat {
     for (Figure f : figures) {
       writeElement(document, f);
     }
-    // Write XML prolog
-    PrintWriter writer = new PrintWriter(new OutputStreamWriter(out, "UTF-8"));
-    writer.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-    // Write XML content
-    Transformer t;
+    // Write XML content (the transformer emits the XML declaration itself)
     try {
-      t = TransformerFactory.newInstance().newTransformer();
+      Transformer t = TransformerFactory.newInstance().newTransformer();
+      t.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
       if (isPrettyPrint) {
         t.setOutputProperty(OutputKeys.INDENT, "yes");
       }
@@ -1344,11 +1207,11 @@ public class SVGOutputFormat implements OutputFormat {
     } catch (TransformerException ex) {
       Logger.getLogger(SVGOutputFormat.class.getName()).log(Level.SEVERE, null, ex);
     }
-    // Flush writer
-    writer.flush();
+    out.flush();
   }
 
   private void initStorageContext(Element root) {
+    nextId = 0;
     identifiedElements = new HashMap<Element, String>();
     gradientToIDMap = new HashMap<Gradient, String>();
   }

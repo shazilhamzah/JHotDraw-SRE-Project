@@ -1333,7 +1333,7 @@ public class ButtonFactory {
       Map<AttributeKey<?>, Object> defaultAttributes,
       Shape colorShape,
       final java.util.List<Disposable> dsp) {
-    return createSelectionColorChooserButton(
+    return createDrawingColorChooserButton(
         editor, attributeKey, labelKey, labels, defaultAttributes, colorShape, null, dsp);
   }
 
@@ -1429,9 +1429,7 @@ public class ButtonFactory {
 
   public static JPopupButton createStrokeWidthButton(DrawingEditor editor, double[] widths) {
     return createStrokeWidthButton(
-        editor,
-        new double[] {0.5d, 1d, 2d, 3d, 5d, 9d, 13d},
-        ResourceBundleUtil.getBundle("org.jhotdraw.draw.Labels"));
+        editor, widths, ResourceBundleUtil.getBundle("org.jhotdraw.draw.Labels"));
   }
 
   public static JPopupButton createStrokeWidthButton(
@@ -1775,9 +1773,9 @@ public class ButtonFactory {
     bar.add(d = new MoveAction.South(editor)).setFocusable(false);
     dsp.add(d);
     bar.addSeparator();
-    bar.add(new BringToFrontAction(editor)).setFocusable(false);
+    bar.add(d = new BringToFrontAction(editor)).setFocusable(false);
     dsp.add(d);
-    bar.add(new SendToBackAction(editor)).setFocusable(false);
+    bar.add(d = new SendToBackAction(editor)).setFocusable(false);
     dsp.add(d);
   }
 
