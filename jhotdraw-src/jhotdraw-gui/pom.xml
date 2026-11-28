@@ -41,4 +41,16 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <!-- Swing tests must not depend on a display; set before AWT initializes. -->
+          <argLine>-Djava.awt.headless=true</argLine>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>

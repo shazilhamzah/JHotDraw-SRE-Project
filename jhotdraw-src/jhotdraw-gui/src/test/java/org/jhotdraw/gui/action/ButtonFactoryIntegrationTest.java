@@ -56,14 +56,15 @@ class ButtonFactoryIntegrationTest {
   }
 
   @Test
-  void addAlignmentButtonsToTracksDuplicateDisposableDefect() {
+  void addAlignmentButtonsToTracksEachActionOnce() {
     JToolBar bar = new JToolBar();
     List<Disposable> dsp = new ArrayList<>();
     ButtonFactory.addAlignmentButtonsTo(bar, fx.editor, dsp);
     // 6 align + sep + 4 move + sep + 2 (front/back)
     assertThat(bar.getComponentCount()).isEqualTo(14);
     assertThat(dsp).hasSize(12);
-    // Characterizes defect: BringToFront/SendToBack are not tracked; last move action is added 3x.
+    // Regression for the fixed defect: BringToFront/SendToBack used to be untracked while the
+    // last move action was added three times.
     assertThat(dsp.get(10)).isNotSameAs(dsp.get(9));
     assertThat(dsp.get(11)).isNotSameAs(dsp.get(9));
   }

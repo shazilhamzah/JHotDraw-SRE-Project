@@ -15,6 +15,8 @@ import org.jhotdraw.gui.JPopupButton;
 /** Headless fixtures for ButtonFactory tests. */
 final class ButtonFactoryTestSupport {
 
+  // Maven sets java.awt.headless via surefire argLine (see jhotdraw-gui/pom.xml). This fallback
+  // only helps when tests run outside Maven and AWT has not been initialized yet.
   static {
     System.setProperty("java.awt.headless", "true");
   }
