@@ -161,6 +161,9 @@ public class ImageMapOutputFormat implements OutputFormat {
 
   /** All other write methods delegate their work to here. */
   public void write(OutputStream out, java.util.List<Figure> figures) throws IOException {
+    if (figures.isEmpty()) {
+      return;
+    }
     Rectangle2D.Double drawingRect = null;
     for (Figure f : figures) {
       if (drawingRect == null) {
